@@ -26,7 +26,7 @@ app.use(express.json());
 
 // Firebase initialization
 admin.initializeApp({
-  databaseURL: 'http:nodejs-user-management-short-take-home.firbeaseio.com'
+  databaseURL: 'https://rentredi-short-take-home-default-rtdb.firebaseio.com'
 })
 const db = admin.database();
 
