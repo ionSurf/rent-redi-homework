@@ -55,6 +55,7 @@ async function getWeatherData(zipCode) {
       const status = error.response.status;
       if (status === 404) throw new Error(`ZIP code ${zipCode} not found.`);
       if (status === 401) throw new Error("Weather API Key is invalid.");
+      if (status === 403) throw new Error("Weather API access forbidden. Check API key permissions.");
       if (status === 429) throw new Error("Weather API rate limit exceeded.");
     } else if (error.request) {
       // The request was made but no response was received (Network issue)

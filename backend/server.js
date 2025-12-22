@@ -135,4 +135,12 @@ app.delete("/users/:id", async (req, res) => {
   res.status(204).send();
 });
 
-app.listen(8080);
+// Only start server if not being imported (for testing)
+if (require.main === module) {
+  const PORT = process.env.PORT || 8080;
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+module.exports = app;
