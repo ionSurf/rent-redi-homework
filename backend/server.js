@@ -21,10 +21,14 @@ const cors = require("cors");
 const { z } = require("zod");
 const weatherBreaker = require("./services/weatherCircuitBreaker");
 const { admin, db } = require("./firebaseConfig");
+const { telemetryMiddleware, getMetrics } = require("./middleware/telemetry");
 const app = express();
 
 app.use(cors());
 app.use(express.json());
+
+// SRE: Apply telemetry middleware to all routes
+app.use(telemetryMiddleware);
 
 // User schema validation
 const UserSchema = z.object({
@@ -42,6 +46,44 @@ app.get("/", (req, res) => {
   // send response
   res.send(`Welcome to the ${companyName} interview!`);
 });
+
+// SRE: Health check endpoint (for synthetic probes and load balancers)
+app.get("/health", async (req, res) => {
+  const health = {
+    status: "healthy",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    checks: {
+      backend: true,
+      database: false,
+      weatherAPI: false
+    }
+  };
+
+  try {
+    // Check Firebase connection
+    const dbRef = db.ref(".info/connected");
+    const snapshot = await dbRef.once("value");
+    health.checks.database = snapshot.val() === true;
+
+    // Check Circuit Breaker status (if open, weather API is down)
+    health.checks.weatherAPI = !weatherBreaker.opened;
+
+    // Overall health is healthy only if all checks pass
+    if (!health.checks.database || !health.checks.weatherAPI) {
+      health.status = "degraded";
+    }
+
+    res.status(200).json(health);
+  } catch (error) {
+    health.status = "unhealthy";
+    health.error = error.message;
+    res.status(503).json(health);
+  }
+});
+
+// SRE: Metrics endpoint (Prometheus-style exposition)
+app.get("/metrics", getMetrics);
 
 // Get all
 app.get("/users", async (_, res) => {

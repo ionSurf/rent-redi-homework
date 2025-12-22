@@ -132,6 +132,8 @@ The frontend will run on `http://localhost:3000`
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/` | Welcome message |
+| GET | `/health` | System health check (SRE) |
+| GET | `/metrics` | RED metrics (SRE) |
 | GET | `/users` | Get all users |
 | GET | `/users/:id` | Get user by ID |
 | POST | `/users` | Create new user |
@@ -187,6 +189,187 @@ Each user has the following fields:
 3. **Validation**: Input validation at both client and server
 4. **Observability**: Structured logging for monitoring
 5. **Defense in Depth**: Multiple layers of validation and security
+
+## 📈 SRE & Observability Strategy
+
+This project implements **production-grade SRE practices** with comprehensive monitoring, health checks, and observability.
+
+### RED Metrics (Golden Signals)
+
+Implemented a custom middleware that tracks the **Rate, Errors, and Duration** of all API requests:
+
+- **Rate**: Total request count and requests per endpoint
+- **Errors**: Error count, error rate percentage, and status code breakdown
+- **Duration**: Average, p50, p95, and p99 latency metrics
+
+**Key Features:**
+- 📊 Per-endpoint performance breakdown
+- ⚠️ Automatic alerting for slow requests (>1000ms)
+- 🔍 Real-time metrics via `/metrics` endpoint
+- 📈 Percentile-based latency tracking (p50, p95, p99)
+
+### Health Checks & Synthetic Probes
+
+#### `/health` Endpoint
+Production-ready health check endpoint that verifies:
+- ✅ Backend service health
+- ✅ Firebase Database connectivity
+- ✅ Weather API availability (via circuit breaker status)
+
+Returns degraded or unhealthy status when dependencies fail, enabling:
+- Load balancer health checks
+- Kubernetes liveness/readiness probes
+- Uptime monitoring systems
+
+#### Synthetic Monitoring
+Automated probe script that continuously validates system health:
+
+```bash
+cd backend
+npm run probe
+```
+
+**What it monitors:**
+- 🔍 Health endpoint every 30 seconds
+- 📊 RED metrics for performance trends
+- 🔄 End-to-end functional tests (create, read, delete user flow)
+- 🚨 Consecutive failure detection with automatic alerts
+
+**Example output:**
+```
+🔍 Running Synthetic Probe...
+┌───────────┬─────────────────┬──────────┬──────────┬──────────┬──────────┐
+│           │ timestamp       │ backend  │ database │ weatherAPI│ latency  │
+├───────────┼─────────────────┼──────────┼──────────┼──────────┼──────────┤
+│           │ 2024-01-15T...  │ ✅ UP    │ ✅ UP    │ ✅ UP    │ 45ms     │
+└───────────┴─────────────────┴──────────┴──────────┴──────────┴──────────┘
+```
+
+### Circuit Breaker Pattern
+
+Integrated **Opossum circuit breaker** for the Weather API to prevent cascading failures:
+
+- **Timeout**: 5 seconds (fast failure)
+- **Error Threshold**: Opens circuit at 50% error rate
+- **Reset Timeout**: 30 seconds for auto-recovery
+- **Fallback**: Graceful error messages when circuit is open
+
+**State Transitions:**
+```
+CLOSED → (50% errors) → OPEN → (30s) → HALF-OPEN → (success) → CLOSED
+```
+
+**Benefits:**
+- 🛡️ Protects backend from unresponsive external APIs
+- ⚡ Fast failure instead of hanging requests
+- 📊 Automatic state tracking and logging
+- 🔄 Self-healing with automatic recovery attempts
+
+### Monitoring Dashboard
+
+Real-time SRE dashboard accessible at `/admin` in the frontend:
+
+**Features:**
+- 🟢 System health status (healthy/degraded/unhealthy)
+- 📊 Live RED metrics visualization
+- 📈 HTTP status code breakdown
+- 🔍 Per-endpoint performance analysis
+- ⏱️ Latency percentiles (p50, p95, p99)
+- 🔄 Auto-refresh every 10 seconds
+
+**Access the dashboard:**
+```
+http://localhost:3000/admin
+```
+
+### Observability Endpoints
+
+| Endpoint | Purpose | Use Case |
+|----------|---------|----------|
+| `GET /health` | System health check | Load balancer health checks, K8s probes |
+| `GET /metrics` | Prometheus-style metrics | Observability, alerting, dashboards |
+
+**Example `/metrics` response:**
+```json
+{
+  "rate": {
+    "total": 1523,
+    "ratePerMinute": "N/A"
+  },
+  "errors": {
+    "total": 12,
+    "errorRate": "0.79%"
+  },
+  "duration": {
+    "avg": "142.45ms",
+    "p50": "98.23ms",
+    "p95": "456.78ms",
+    "p99": "892.11ms"
+  },
+  "statusCodes": {
+    "200": 1487,
+    "201": 24,
+    "400": 8,
+    "500": 4
+  },
+  "endpoints": {
+    "GET /users": {
+      "count": 456,
+      "errors": 0,
+      "errorRate": "0%",
+      "avgDuration": "45.23ms",
+      "p95Duration": "112.45ms"
+    }
+  }
+}
+```
+
+### Running the Full SRE Stack
+
+**Terminal 1 - Backend:**
+```bash
+cd backend
+npm start
+```
+
+**Terminal 2 - Synthetic Probe:**
+```bash
+cd backend
+npm run probe
+```
+
+**Terminal 3 - Frontend:**
+```bash
+cd frontend
+npm start
+```
+
+**Terminal 4 - View Monitoring Dashboard:**
+```
+Open http://localhost:3000/admin
+```
+
+### SRE Best Practices Demonstrated
+
+✅ **Golden Signals Monitoring** (RED metrics)
+✅ **Health Checks** for dependency verification
+✅ **Synthetic Monitoring** for continuous validation
+✅ **Circuit Breaker** for fault isolation
+✅ **Graceful Degradation** with fallback mechanisms
+✅ **Structured Logging** for observability
+✅ **Percentile-based SLIs** (p95, p99 latency)
+✅ **Real-time Dashboard** for operational visibility
+
+### Production Considerations
+
+For production deployment, you would integrate:
+- **Prometheus/Grafana**: For long-term metrics storage and visualization
+- **PagerDuty/Opsgenie**: For incident alerting
+- **DataDog/New Relic**: For APM and distributed tracing
+- **Kubernetes Probes**: Using `/health` endpoint
+- **Log Aggregation**: ELK stack or CloudWatch for centralized logging
+
+This implementation provides a **foundation for production-grade observability** that can scale to enterprise requirements.
 
 ### UI/UX Features
 
