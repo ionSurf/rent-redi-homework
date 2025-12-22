@@ -19,7 +19,23 @@ export const UserRepository = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, zip })
     });
-    return response.json();
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      // Handle different error response formats from backend
+      if (data.error) {
+        throw new Error(data.error);
+      } else if (data.errors && Array.isArray(data.errors)) {
+        // Zod validation errors
+        const errorMessages = data.errors.map(err => err.message).join(', ');
+        throw new Error(errorMessages);
+      } else {
+        throw new Error('Failed to create user');
+      }
+    }
+
+    return data;
   },
 
   updateUser: async (id, name, zip) => {
@@ -29,7 +45,23 @@ export const UserRepository = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ name, zip })
     });
-    return response.json();
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      // Handle different error response formats from backend
+      if (data.error) {
+        throw new Error(data.error);
+      } else if (data.errors && Array.isArray(data.errors)) {
+        // Zod validation errors
+        const errorMessages = data.errors.map(err => err.message).join(', ');
+        throw new Error(errorMessages);
+      } else {
+        throw new Error('Failed to update user');
+      }
+    }
+
+    return data;
   },
 
   deleteUser: (id) => remove(ref(db, `users/${id}`))

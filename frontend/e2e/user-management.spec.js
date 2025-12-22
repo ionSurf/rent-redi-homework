@@ -239,6 +239,78 @@ test.describe('User Management - CRUD Operations', () => {
     // Should show error from backend
     await expect(page.locator('.error-message')).toBeVisible({ timeout: 10000 });
   });
+
+  test('should show error for non-existent ZIP code', async ({ page }) => {
+    await page.click('button:has-text("Add User")');
+    await page.fill('#name', 'Test User');
+    await page.fill('#zip', '99999'); // Non-existent ZIP
+    await page.click('button[type="submit"]');
+
+    // Should show error message
+    const errorMessage = page.locator('.error-message');
+    await expect(errorMessage).toBeVisible({ timeout: 10000 });
+
+    // Error should mention ZIP code issue
+    const errorText = await errorMessage.textContent();
+    expect(errorText.toLowerCase()).toContain('zip');
+  });
+
+  test('should show error when editing with invalid ZIP', async ({ page }) => {
+    // Create a user first
+    await page.click('button:has-text("Add User")');
+    await page.fill('#name', 'Edit Test User');
+    await page.fill('#zip', '10001');
+    await page.click('button[type="submit"]');
+    await page.waitForTimeout(2000);
+
+    // Edit with invalid ZIP
+    await page.click('[title="Edit"]').first();
+    await expect(page.locator('.modal-content')).toBeVisible();
+
+    await page.fill('#zip', '99999'); // Invalid ZIP
+    await page.click('button[type="submit"]:has-text("Update User")');
+
+    // Should show error message
+    await expect(page.locator('.error-message')).toBeVisible({ timeout: 10000 });
+
+    // Modal should remain open
+    await expect(page.locator('.modal-content')).toBeVisible();
+  });
+
+  test('should display user-friendly error messages', async ({ page }) => {
+    await page.click('button:has-text("Add User")');
+    await page.fill('#name', 'Error Message Test');
+    await page.fill('#zip', '00000'); // Invalid ZIP
+    await page.click('button[type="submit"]');
+
+    // Wait for error
+    const errorMessage = page.locator('.error-message');
+    await expect(errorMessage).toBeVisible({ timeout: 10000 });
+
+    // Error should be user-friendly (not a stack trace or technical jargon)
+    const errorText = await errorMessage.textContent();
+    expect(errorText.length).toBeGreaterThan(0);
+    expect(errorText.length).toBeLessThan(200); // Reasonably short message
+  });
+
+  test('should allow retry after error', async ({ page }) => {
+    // Try with invalid ZIP first
+    await page.click('button:has-text("Add User")');
+    await page.fill('#name', 'Retry Test');
+    await page.fill('#zip', '99999'); // Invalid ZIP
+    await page.click('button[type="submit"]');
+
+    // Should show error
+    await expect(page.locator('.error-message')).toBeVisible({ timeout: 10000 });
+
+    // Fix ZIP and retry
+    await page.fill('#zip', '10001'); // Valid ZIP
+    await page.click('button[type="submit"]');
+
+    // Should succeed
+    await expect(page.locator('.modal-content')).not.toBeVisible({ timeout: 10000 });
+    await expect(page.locator('text=Retry Test')).toBeVisible({ timeout: 10000 });
+  });
 });
 
 test.describe('User Management - UI/UX', () => {

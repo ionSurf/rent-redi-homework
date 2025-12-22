@@ -96,11 +96,15 @@ app.post("/users", async (req, res) => {
 app.put("/users/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, zip } = req.body;
+
+    // Validate the request body against the schema
+    const validatedData = UserSchema.parse(req.body);
+    const { name, zip } = validatedData;
+
     const userRef = db.ref(`users/${id}`);
     const snapshot = await userRef.once("value");
 
-    if (!snapshot.exists()) return res.status(404).send("User not found");
+    if (!snapshot.exists()) return res.status(404).json({ error: "User not found" });
 
     let updates = { name };
 
@@ -119,6 +123,10 @@ app.put("/users/:id", async (req, res) => {
     await userRef.update(updates);
     res.json({ id, ...updates });
   } catch (err) {
+    if (err instanceof z.ZodError) {
+      // Return a clean 400 error with Zod's specific issues
+      return res.status(400).json({ errors: err.errors });
+    }
     res.status(500).json({ error: err.message });
   }
 });
