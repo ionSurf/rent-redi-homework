@@ -81,14 +81,26 @@ function UserManagement() {
   const handleInputChange = (field, value) => {
     setFormData({ ...formData, [field]: value });
 
-    // Clear submit error when user starts typing
-    if (errors.submit) {
-      setErrors({ ...errors, submit: undefined });
-    }
-
     // Real-time validation for this field
     const fieldErrors = validateField(field, value);
-    setErrors({ ...errors, ...fieldErrors, submit: undefined });
+
+    // Update errors state - clear the field error if validation passes
+    setErrors(prev => {
+      const newErrors = { ...prev };
+
+      // Clear submit error when user starts typing
+      delete newErrors.submit;
+
+      // If validation passed (no error for this field), clear the error
+      if (!fieldErrors[field]) {
+        delete newErrors[field];
+      } else {
+        // Otherwise set the new error
+        newErrors[field] = fieldErrors[field];
+      }
+
+      return newErrors;
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -104,7 +116,7 @@ function UserManagement() {
       handleCloseModal();
     } catch (error) {
       console.error('Error saving user:', error);
-      setErrors({ submit: error.message || 'Failed to save user' });
+      setErrors(prev => ({ ...prev, submit: error.message || 'Failed to save user' }));
     }
   };
 
