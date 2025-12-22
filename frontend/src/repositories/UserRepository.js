@@ -27,5 +27,15 @@ export const UserRepository = {
     return response.json();
   },
 
+  updateUser: async (id, name, zip) => {
+    // Call our Node.js API to handle the update and re-fetch weather if zip changed
+    const response = await fetch(`http://localhost:8080/users/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, zip })
+    });
+    return response.json();
+  },
+
   deleteUser: (id) => remove(ref(db, `users/${id}`))
 };

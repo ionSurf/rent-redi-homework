@@ -19,6 +19,8 @@ const express = require("express");
 const admin = require("firebase-admin");
 const axios = require("axios");
 const cors = require("cors");
+const { z } = require("zod");
+const { getWeatherData } = require("./services/weatherService");
 const app = express();
 
 app.use(cors());
@@ -29,6 +31,12 @@ admin.initializeApp({
   databaseURL: "https://rentredi-short-take-home-default-rtdb.firebaseio.com",
 });
 const db = admin.database();
+
+// User schema validation
+const UserSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  zip: z.string().regex(/^\d{5}$/, "Must be a 5-digit ZIP code")
+});
 
 app.get("/", (req, res) => {
   console.log('triggering  "/" endpoint...');
@@ -42,7 +50,7 @@ app.get("/", (req, res) => {
 });
 
 // Get all
-app.get("users/", async (_, res) => {
+app.get("/users", async (_, res) => {
   console.log("Get all users");
   const snapshot = await db.ref("users").once("value");
   const users = snapshot.val() || {};
@@ -50,8 +58,9 @@ app.get("users/", async (_, res) => {
 });
 
 // Get by user_id
-app.get("users/:id", async (_, res) => {
-  console.log(`Get user with id=$id`);
+app.get("/users/:id", async (req, res) => {
+  const { id } = req.params;
+  console.log(`Get user with id=${id}`);
   const snapshot = await db.ref("users").child(id).once("value");
   const user = snapshot.val();
   res.json(user);
@@ -71,7 +80,10 @@ app.post("/users", async (req, res) => {
       id: newUserRef.key,
       name,
       zip,
-      ...geoData,
+      latitude: geoData.lat,
+      longitude: geoData.lon,
+      timezone: geoData.timezone,
+      locationName: geoData.locationName,
       createdAt: admin.database.ServerValue.TIMESTAMP,
     };
 
@@ -100,7 +112,14 @@ app.put("/users/:id", async (req, res) => {
 
     if (zip && zip !== snapshot.val().zip) {
       const geoData = await getWeatherData(zip);
-      updates = { ...updates, zip, ...geoData };
+      updates = {
+        ...updates,
+        zip,
+        latitude: geoData.lat,
+        longitude: geoData.lon,
+        timezone: geoData.timezone,
+        locationName: geoData.locationName
+      };
     }
 
     await userRef.update(updates);
