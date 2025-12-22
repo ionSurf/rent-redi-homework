@@ -2,6 +2,15 @@
 
 This document describes the E2E testing setup for the RentRedi frontend application.
 
+## Quick Start
+
+```bash
+cd frontend
+npm install
+npx playwright install    # ⚠️ REQUIRED: Install browser binaries (one-time setup)
+npm run test:e2e         # Run all tests
+```
+
 ## Overview
 
 We use [Playwright](https://playwright.dev/) for comprehensive end-to-end testing across multiple browsers and devices. Our test suite covers:
@@ -93,10 +102,19 @@ test('should navigate to Users page', async ({ page }) => {
 ### Prerequisites
 
 ```bash
-# Install dependencies (if not already installed)
+# 1. Install dependencies (if not already installed)
 cd frontend
 npm install
+
+# 2. Install Playwright browsers (REQUIRED - only needs to be run once)
+npx playwright install
 ```
+
+**Important Notes**:
+- The `npx playwright install` command downloads the browser binaries (Chromium, Firefox, WebKit) needed to run the tests
+- This is a **one-time setup step** - you only need to run it once per machine
+- The download is approximately 500MB and requires internet access
+- If you encounter network restrictions, you may need to run this on your local machine or configure proxy settings
 
 ### Run All Tests
 
