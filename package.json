@@ -11,7 +11,7 @@
     "start:frontend": "cd frontend && npm start"
   },
   "keywords": [],
-  "author": "Ives van Hoorne",
+  "author": "Javier Prieto",
   "license": "MIT",
   "dependencies": {
     "concurrently": "^9.2.1"

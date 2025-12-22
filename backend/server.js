@@ -16,19 +16,25 @@ Requirements
 */
 
 const express = require("express");
-const admin = require("firebase-admin");
 const axios = require("axios");
 const cors = require("cors");
+const { z } = require("zod");
+const weatherBreaker = require("./services/weatherCircuitBreaker");
+const { admin, db } = require("./firebaseConfig");
+const { telemetryMiddleware, getMetrics } = require("./middleware/telemetry");
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-// Firebase initialization
-admin.initializeApp({
-  databaseURL: "https://rentredi-short-take-home-default-rtdb.firebaseio.com",
+// SRE: Apply telemetry middleware to all routes
+app.use(telemetryMiddleware);
+
+// User schema validation
+const UserSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  zip: z.string().regex(/^\d{5}$/, "Must be a 5-digit ZIP code")
 });
-const db = admin.database();
 
 app.get("/", (req, res) => {
   console.log('triggering  "/" endpoint...');
@@ -41,8 +47,46 @@ app.get("/", (req, res) => {
   res.send(`Welcome to the ${companyName} interview!`);
 });
 
+// SRE: Health check endpoint (for synthetic probes and load balancers)
+app.get("/health", async (req, res) => {
+  const health = {
+    status: "healthy",
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+    checks: {
+      backend: true,
+      database: false,
+      weatherAPI: false
+    }
+  };
+
+  try {
+    // Check Firebase connection
+    const dbRef = db.ref(".info/connected");
+    const snapshot = await dbRef.once("value");
+    health.checks.database = snapshot.val() === true;
+
+    // Check Circuit Breaker status (if open, weather API is down)
+    health.checks.weatherAPI = !weatherBreaker.opened;
+
+    // Overall health is healthy only if all checks pass
+    if (!health.checks.database || !health.checks.weatherAPI) {
+      health.status = "degraded";
+    }
+
+    res.status(200).json(health);
+  } catch (error) {
+    health.status = "unhealthy";
+    health.error = error.message;
+    res.status(503).json(health);
+  }
+});
+
+// SRE: Metrics endpoint (Prometheus-style exposition)
+app.get("/metrics", getMetrics);
+
 // Get all
-app.get("users/", async (_, res) => {
+app.get("/users", async (_, res) => {
   console.log("Get all users");
   const snapshot = await db.ref("users").once("value");
   const users = snapshot.val() || {};
@@ -50,8 +94,9 @@ app.get("users/", async (_, res) => {
 });
 
 // Get by user_id
-app.get("users/:id", async (_, res) => {
-  console.log(`Get user with id=$id`);
+app.get("/users/:id", async (req, res) => {
+  const { id } = req.params;
+  console.log(`Get user with id=${id}`);
   const snapshot = await db.ref("users").child(id).once("value");
   const user = snapshot.val();
   res.json(user);
@@ -64,14 +109,17 @@ app.post("/users", async (req, res) => {
     const validatedData = UserSchema.parse(req.body);
 
     const { name, zip } = validatedData;
-    const geoData = await getWeatherData(zip);
+    const geoData = await weatherBreaker.fire(zip);
 
     const newUserRef = db.ref("users").push();
     const userData = {
       id: newUserRef.key,
       name,
       zip,
-      ...geoData,
+      latitude: geoData.lat,
+      longitude: geoData.lon,
+      timezone: geoData.timezone,
+      locationName: geoData.locationName,
       createdAt: admin.database.ServerValue.TIMESTAMP,
     };
 
@@ -90,22 +138,37 @@ app.post("/users", async (req, res) => {
 app.put("/users/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, zip } = req.body;
+
+    // Validate the request body against the schema
+    const validatedData = UserSchema.parse(req.body);
+    const { name, zip } = validatedData;
+
     const userRef = db.ref(`users/${id}`);
     const snapshot = await userRef.once("value");
 
-    if (!snapshot.exists()) return res.status(404).send("User not found");
+    if (!snapshot.exists()) return res.status(404).json({ error: "User not found" });
 
     let updates = { name };
 
     if (zip && zip !== snapshot.val().zip) {
-      const geoData = await getWeatherData(zip);
-      updates = { ...updates, zip, ...geoData };
+      const geoData = await weatherBreaker.fire(zip);
+      updates = {
+        ...updates,
+        zip,
+        latitude: geoData.lat,
+        longitude: geoData.lon,
+        timezone: geoData.timezone,
+        locationName: geoData.locationName
+      };
     }
 
     await userRef.update(updates);
     res.json({ id, ...updates });
   } catch (err) {
+    if (err instanceof z.ZodError) {
+      // Return a clean 400 error with Zod's specific issues
+      return res.status(400).json({ errors: err.errors });
+    }
     res.status(500).json({ error: err.message });
   }
 });
@@ -116,4 +179,12 @@ app.delete("/users/:id", async (req, res) => {
   res.status(204).send();
 });
 
-app.listen(8080);
+// Only start server if not being imported (for testing)
+if (require.main === module) {
+  const PORT = process.env.PORT || 8080;
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+module.exports = app;

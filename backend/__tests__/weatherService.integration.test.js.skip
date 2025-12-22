@@ -1,0 +1,120 @@
+const { getWeatherData } = require('../services/weatherService');
+
+describe('Weather Service Unit Tests', () => {
+
+  describe('getWeatherData', () => {
+    it('should return geolocation data for valid ZIP code', async () => {
+      const zipCode = '10001';
+
+      const result = await getWeatherData(zipCode);
+
+      expect(result).toHaveProperty('lat');
+      expect(result).toHaveProperty('lon');
+      expect(result).toHaveProperty('timezone');
+      expect(result).toHaveProperty('locationName');
+
+      expect(typeof result.lat).toBe('number');
+      expect(typeof result.lon).toBe('number');
+      expect(typeof result.timezone).toBe('number');
+      expect(typeof result.locationName).toBe('string');
+    }, 15000);
+
+    it('should return correct data for New York ZIP (10001)', async () => {
+      const zipCode = '10001';
+
+      const result = await getWeatherData(zipCode);
+
+      // New York should have approximately these coordinates
+      expect(result.lat).toBeCloseTo(40.75, 0);
+      expect(result.lon).toBeCloseTo(-73.99, 0);
+      expect(result.locationName).toContain('New York');
+    }, 15000);
+
+    it('should return correct data for Los Angeles ZIP (90210)', async () => {
+      const zipCode = '90210';
+
+      const result = await getWeatherData(zipCode);
+
+      // Beverly Hills should have approximately these coordinates
+      expect(result.lat).toBeCloseTo(34.09, 0);
+      expect(result.lon).toBeCloseTo(-118.41, 0);
+    }, 15000);
+
+    it('should throw error for invalid ZIP format (too short)', async () => {
+      const zipCode = '123';
+
+      await expect(getWeatherData(zipCode)).rejects.toThrow('Invalid ZIP code format');
+    });
+
+    it('should throw error for invalid ZIP format (too long)', async () => {
+      const zipCode = '123456';
+
+      await expect(getWeatherData(zipCode)).rejects.toThrow('Invalid ZIP code format');
+    });
+
+    it('should throw error for non-numeric ZIP', async () => {
+      const zipCode = 'ABCDE';
+
+      await expect(getWeatherData(zipCode)).rejects.toThrow('Invalid ZIP code format');
+    });
+
+    it('should throw error for non-existent ZIP code', async () => {
+      const zipCode = '00000';
+
+      await expect(getWeatherData(zipCode)).rejects.toThrow('ZIP code 00000 not found');
+    }, 15000);
+
+    it('should validate ZIP code before making API call', async () => {
+      const zipCode = '12-34';
+
+      await expect(getWeatherData(zipCode)).rejects.toThrow('Invalid ZIP code format');
+      // This should fail immediately without making an API call
+    });
+  });
+
+  describe('Response Data Structure', () => {
+    it('should return all required fields', async () => {
+      const zipCode = '94102'; // San Francisco
+
+      const result = await getWeatherData(zipCode);
+
+      const requiredFields = ['lat', 'lon', 'timezone', 'locationName'];
+      requiredFields.forEach(field => {
+        expect(result).toHaveProperty(field);
+        expect(result[field]).toBeDefined();
+        expect(result[field]).not.toBeNull();
+      });
+    }, 15000);
+
+    it('should return timezone as number in seconds', async () => {
+      const zipCode = '10001';
+
+      const result = await getWeatherData(zipCode);
+
+      expect(typeof result.timezone).toBe('number');
+      // Timezone should be in seconds (reasonable range)
+      expect(Math.abs(result.timezone)).toBeLessThan(86400); // Less than 24 hours in seconds
+    }, 15000);
+  });
+
+  describe('Different US Regions', () => {
+    const testCases = [
+      { zip: '10001', location: 'New York', approxLat: 40.75 },
+      { zip: '90210', location: 'Beverly Hills', approxLat: 34.09 },
+      { zip: '60601', location: 'Chicago', approxLat: 41.88 },
+      { zip: '33101', location: 'Miami', approxLat: 25.77 },
+      { zip: '98101', location: 'Seattle', approxLat: 47.61 }
+    ];
+
+    testCases.forEach(({ zip, location, approxLat }) => {
+      it(`should fetch data for ${location} (${zip})`, async () => {
+        const result = await getWeatherData(zip);
+
+        expect(result.lat).toBeCloseTo(approxLat, 0);
+        expect(result).toHaveProperty('lon');
+        expect(result).toHaveProperty('timezone');
+        expect(result).toHaveProperty('locationName');
+      }, 15000);
+    });
+  });
+});

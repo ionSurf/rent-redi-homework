@@ -1,15 +1,10 @@
-import { db, auth, googleProvider } from "../firebaseConfig";
-import { ref, set, push, onValue, remove, update } from "firebase/database";
-import { signInWithPopup, signOut } from "firebase/auth";
+import { db } from "../firebaseConfig";
+import { ref, onValue, remove } from "firebase/database";
 
 export const UserRepository = {
-  // Authentication
-  login: () => signInWithPopup(auth, googleProvider),
-  logout: () => signOut(auth),
-
   // CRUD Operations
   subscribeToUsers: (callback) => {
-    const userRef = ref(db, "users");
+    const userRef = ref(db, 'users');
     return onValue(userRef, (snapshot) => {
       const data = snapshot.val();
       const list = data ? Object.values(data) : [];
@@ -19,13 +14,55 @@ export const UserRepository = {
 
   createUser: async (name, zip) => {
     // We call our Node.js API to handle the weather logic
-    const response = await fetch("http://localhost:8080/users", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, zip }),
+    const response = await fetch('http://localhost:8080/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, zip })
     });
-    return response.json();
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      // Handle different error response formats from backend
+      if (data.error) {
+        throw new Error(data.error);
+      } else if (data.errors && Array.isArray(data.errors)) {
+        // Zod validation errors
+        const errorMessages = data.errors.map(err => err.message).join(', ');
+        throw new Error(errorMessages);
+      } else {
+        throw new Error('Failed to create user');
+      }
+    }
+
+    return data;
   },
 
-  deleteUser: (id) => remove(ref(db, `users/${id}`)),
+  updateUser: async (id, name, zip) => {
+    // Call our Node.js API to handle the update and re-fetch weather if zip changed
+    const response = await fetch(`http://localhost:8080/users/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, zip })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      // Handle different error response formats from backend
+      if (data.error) {
+        throw new Error(data.error);
+      } else if (data.errors && Array.isArray(data.errors)) {
+        // Zod validation errors
+        const errorMessages = data.errors.map(err => err.message).join(', ');
+        throw new Error(errorMessages);
+      } else {
+        throw new Error('Failed to update user');
+      }
+    }
+
+    return data;
+  },
+
+  deleteUser: (id) => remove(ref(db, `users/${id}`))
 };
