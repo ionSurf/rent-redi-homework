@@ -244,6 +244,14 @@
   font-size: 14px;
 }
 
+.field-hint {
+  font-weight: 400;
+  color: #666;
+  font-size: 12px;
+  margin-left: 6px;
+  font-style: italic;
+}
+
 .form-group input {
   width: 100%;
   padding: 12px;
@@ -268,6 +276,15 @@
   color: #dc3545;
   font-size: 14px;
   margin-top: 6px;
+  font-weight: 500;
+}
+
+.success-message {
+  display: block;
+  color: #28a745;
+  font-size: 14px;
+  margin-top: 6px;
+  font-weight: 500;
 }
 
 .submit-error {

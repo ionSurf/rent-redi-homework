@@ -13,14 +13,82 @@ function UserManagement() {
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.name || formData.name.length < 2) {
-      newErrors.name = 'Name must be at least 2 characters';
+
+    // Name validation with detailed feedback
+    if (!formData.name) {
+      newErrors.name = 'Name is required';
+    } else if (formData.name.trim().length === 0) {
+      newErrors.name = 'Name cannot be empty or only spaces';
+    } else if (formData.name.length < 2) {
+      newErrors.name = `Name must be at least 2 characters (currently ${formData.name.length})`;
+    } else if (formData.name.length > 100) {
+      newErrors.name = 'Name cannot exceed 100 characters';
     }
-    if (!/^\d{5}$/.test(formData.zip)) {
-      newErrors.zip = 'Must be a 5-digit ZIP code';
+
+    // ZIP code validation with detailed feedback
+    if (!formData.zip) {
+      newErrors.zip = 'ZIP code is required';
+    } else if (!/^\d{5}$/.test(formData.zip)) {
+      if (!/^\d+$/.test(formData.zip)) {
+        newErrors.zip = 'ZIP code must contain only numbers (e.g., 10001)';
+      } else if (formData.zip.length < 5) {
+        newErrors.zip = `ZIP code must be exactly 5 digits (${formData.zip.length}/5)`;
+      } else if (formData.zip.length > 5) {
+        newErrors.zip = `ZIP code must be exactly 5 digits (too long: ${formData.zip.length})`;
+      } else {
+        newErrors.zip = 'ZIP code must be a valid 5-digit US ZIP code (e.g., 10001, 90210)';
+      }
     }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  // Real-time validation helper
+  const validateField = (fieldName, value) => {
+    const fieldErrors = {};
+
+    if (fieldName === 'name') {
+      if (!value) {
+        fieldErrors.name = 'Name is required';
+      } else if (value.trim().length === 0) {
+        fieldErrors.name = 'Name cannot be empty or only spaces';
+      } else if (value.length < 2) {
+        fieldErrors.name = `Name must be at least 2 characters (currently ${value.length})`;
+      } else if (value.length > 100) {
+        fieldErrors.name = 'Name cannot exceed 100 characters';
+      }
+    }
+
+    if (fieldName === 'zip') {
+      if (!value) {
+        fieldErrors.zip = 'ZIP code is required';
+      } else if (!/^\d{5}$/.test(value)) {
+        if (!/^\d+$/.test(value)) {
+          fieldErrors.zip = 'ZIP code must contain only numbers';
+        } else if (value.length < 5) {
+          fieldErrors.zip = `ZIP code must be 5 digits (${value.length}/5)`;
+        } else if (value.length > 5) {
+          fieldErrors.zip = 'ZIP code must be exactly 5 digits';
+        }
+      }
+    }
+
+    return fieldErrors;
+  };
+
+  // Handle input change with real-time validation
+  const handleInputChange = (field, value) => {
+    setFormData({ ...formData, [field]: value });
+
+    // Clear submit error when user starts typing
+    if (errors.submit) {
+      setErrors({ ...errors, submit: undefined });
+    }
+
+    // Real-time validation for this field
+    const fieldErrors = validateField(field, value);
+    setErrors({ ...errors, ...fieldErrors, submit: undefined });
   };
 
   const handleSubmit = async (e) => {
@@ -175,30 +243,50 @@ function UserManagement() {
 
             <form onSubmit={handleSubmit}>
               <div className="form-group">
-                <label htmlFor="name">Name *</label>
+                <label htmlFor="name">
+                  Name *
+                  <span className="field-hint">
+                    (minimum 2 characters)
+                  </span>
+                </label>
                 <input
                   id="name"
                   type="text"
                   value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Enter full name"
+                  onChange={(e) => handleInputChange('name', e.target.value)}
+                  placeholder="e.g., John Doe"
                   className={errors.name ? 'error' : ''}
+                  autoComplete="name"
                 />
-                {errors.name && <span className="error-message">{errors.name}</span>}
+                {errors.name && <span className="error-message">⚠️ {errors.name}</span>}
+                {!errors.name && formData.name && formData.name.length >= 2 && (
+                  <span className="success-message">✓ Valid name</span>
+                )}
               </div>
 
               <div className="form-group">
-                <label htmlFor="zip">ZIP Code *</label>
+                <label htmlFor="zip">
+                  ZIP Code *
+                  <span className="field-hint">
+                    (5-digit US ZIP code)
+                  </span>
+                </label>
                 <input
                   id="zip"
                   type="text"
                   value={formData.zip}
-                  onChange={(e) => setFormData({ ...formData, zip: e.target.value })}
-                  placeholder="Enter 5-digit ZIP code"
+                  onChange={(e) => handleInputChange('zip', e.target.value)}
+                  placeholder="e.g., 10001 or 90210"
                   maxLength="5"
                   className={errors.zip ? 'error' : ''}
+                  autoComplete="postal-code"
+                  inputMode="numeric"
+                  pattern="\d{5}"
                 />
-                {errors.zip && <span className="error-message">{errors.zip}</span>}
+                {errors.zip && <span className="error-message">⚠️ {errors.zip}</span>}
+                {!errors.zip && formData.zip && /^\d{5}$/.test(formData.zip) && (
+                  <span className="success-message">✓ Valid ZIP code</span>
+                )}
               </div>
 
               {errors.submit && (
