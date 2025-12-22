@@ -9,9 +9,13 @@ const admin = require("firebase-admin");
 
 // Initialize Firebase Admin
 if (!admin.apps.length) {
-  try {
-    // Try to load service account key
-    const serviceAccount = require("./serviceAccountKey.json");
+  // Check if service account key exists
+  const fs = require('fs');
+  const serviceAccountPath = './serviceAccountKey.json';
+
+  if (fs.existsSync(serviceAccountPath)) {
+    // Load service account key
+    const serviceAccount = require(serviceAccountPath);
 
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
@@ -19,15 +23,17 @@ if (!admin.apps.length) {
     });
 
     console.log("✅ Firebase initialized with service account");
-  } catch (error) {
-    // Fallback: Initialize without credentials (will have limited access)
-    console.warn("⚠️  Service account key not found. Using limited access mode.");
-    console.warn("   To fix: Download serviceAccountKey.json from Firebase Console");
-    console.warn("   See backend/FIREBASE_SETUP.md for instructions");
+  } else {
+    // Initialize without credentials (works with public database rules)
+    console.warn("⚠️  Service account key not found. Using unauthenticated mode.");
+    console.warn("   Database operations may be limited by security rules.");
+    console.warn("   For full access, add serviceAccountKey.json to backend/");
 
     admin.initializeApp({
       databaseURL: "https://rentredi-short-take-home-default-rtdb.firebaseio.com"
     });
+
+    console.log("✅ Firebase initialized in unauthenticated mode");
   }
 }
 
