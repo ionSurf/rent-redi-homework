@@ -16,21 +16,15 @@ Requirements
 */
 
 const express = require("express");
-const admin = require("firebase-admin");
 const axios = require("axios");
 const cors = require("cors");
 const { z } = require("zod");
 const { getWeatherData } = require("./services/weatherService");
+const { admin, db } = require("./firebaseConfig");
 const app = express();
 
 app.use(cors());
 app.use(express.json());
-
-// Firebase initialization
-admin.initializeApp({
-  databaseURL: "https://rentredi-short-take-home-default-rtdb.firebaseio.com",
-});
-const db = admin.database();
 
 // User schema validation
 const UserSchema = z.object({
