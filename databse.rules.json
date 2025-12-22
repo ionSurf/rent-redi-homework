@@ -1,0 +1,11 @@
+{
+  "rules": {
+    "users": {
+      ".read": "auth != null", 
+      ".write": "auth != null",
+      "$user_id": {
+        ".validate": "newData.hasChildren(['name', 'zip', 'lat', 'lon'])"
+      }
+    }
+  }
+}
