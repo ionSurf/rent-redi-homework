@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useUsers } from "./hooks/useUsers";
 import { UserRepository } from "./repositories/UserRepository";
 import { useAuth } from "./hooks/useAuth"; // Assume similar hook for Auth
-import { UserSchema } from "../../shared/schemas";
+import { UserSchema } from "./shared/schemas";
 
 function App() {
   const { addUser } = useUsers();
