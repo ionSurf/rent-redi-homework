@@ -18,7 +18,7 @@ Requirements
 const express = require("express");
 const admin = require("firebase-admin");
 const axios = require("axios");
-const cors = require('cors');
+const cors = require("cors");
 const app = express();
 
 app.use(cors());
@@ -26,28 +26,9 @@ app.use(express.json());
 
 // Firebase initialization
 admin.initializeApp({
-  databaseURL: 'https://rentredi-short-take-home-default-rtdb.firebaseio.com'
-})
+  databaseURL: "https://rentredi-short-take-home-default-rtdb.firebaseio.com",
+});
 const db = admin.database();
-
-// Get latitude and longitude from zip code
-const API_KEY = '7afa46f2e91768e7eeeb9001ce40de19';
-async function getWeatherData(zipCode) {
-  try {
-    const url = `https://api.openweathermap.org/data/2.5/weather?zip=${zipCode},us&appid=${API_KEY}`;
-    const response = await axios.get(url);
-    const { coord, timezone } = response.data;
-    return {
-      lat: coord.lat,
-      lon: coord.lon,
-      timezone 
-    };
-  }
-  catch (response) {
-    console.error("Weather API Error:", error);
-    throw new Error("Could not fetch location data for that ZIP code.");
-  }
-}
 
 app.get("/", (req, res) => {
   console.log('triggering  "/" endpoint...');
@@ -62,9 +43,8 @@ app.get("/", (req, res) => {
 
 // Get all
 app.get("users/", async (_, res) => {
-  console.log('Get all users');
-  const snapshot = await db.ref('users')
-    .once('value');
+  console.log("Get all users");
+  const snapshot = await db.ref("users").once("value");
   const users = snapshot.val() || {};
   res.json(users);
 });
@@ -72,9 +52,7 @@ app.get("users/", async (_, res) => {
 // Get by user_id
 app.get("users/:id", async (_, res) => {
   console.log(`Get user with id=$id`);
-  const snapshot = await db.ref('users')
-    .child(id)
-    .once('value');
+  const snapshot = await db.ref("users").child(id).once("value");
   const user = snapshot.val();
   res.json(user);
 });
@@ -82,23 +60,28 @@ app.get("users/:id", async (_, res) => {
 // Create
 app.post("/users", async (req, res) => {
   try {
-    const { name, zip } = req.body;
-    if (!name || !zip) return res.status(400).send("Missing name or zip");
+    // Validate the request body against the schema
+    const validatedData = UserSchema.parse(req.body);
 
+    const { name, zip } = validatedData;
     const geoData = await getWeatherData(zip);
+
     const newUserRef = db.ref("users").push();
-    
     const userData = {
       id: newUserRef.key,
       name,
       zip,
       ...geoData,
-      createdAt: admin.database.ServerValue.TIMESTAMP
+      createdAt: admin.database.ServerValue.TIMESTAMP,
     };
 
     await newUserRef.set(userData);
     res.status(201).json(userData);
   } catch (err) {
+    if (err instanceof z.ZodError) {
+      // Return a clean 400 error with Zod's specific issues
+      return res.status(400).json({ errors: err.errors });
+    }
     res.status(500).json({ error: err.message });
   }
 });
@@ -114,7 +97,7 @@ app.put("/users/:id", async (req, res) => {
     if (!snapshot.exists()) return res.status(404).send("User not found");
 
     let updates = { name };
-    
+
     if (zip && zip !== snapshot.val().zip) {
       const geoData = await getWeatherData(zip);
       updates = { ...updates, zip, ...geoData };

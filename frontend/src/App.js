@@ -1,43 +1,58 @@
-import React, { useState } from 'react';
-import { useUsers } from './hooks/useUsers';
-import { UserRepository } from './repositories/UserRepository';
-import { useAuth } from './hooks/useAuth'; // Assume similar hook for Auth
+import React, { useState } from "react";
+import { useUsers } from "./hooks/useUsers";
+import { UserRepository } from "./repositories/UserRepository";
+import { useAuth } from "./hooks/useAuth"; // Assume similar hook for Auth
+import { UserSchema } from "../../shared/schemas";
 
 function App() {
-  const { users, loading, addUser, deleteUser } = useUsers();
-  const [name, setName] = useState('');
-  const [zip, setZip] = useState('');
+  const { addUser } = useUsers();
+  const [form, setForm] = useState({ name: "", zip: "" });
+  const [errors, setErrors] = useState({});
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    addUser(name, zip);
-    setName(''); setZip('');
+
+    // Validate locally
+    const result = UserSchema.safeParse(form);
+
+    if (!result.success) {
+      // Map Zod errors to our state
+      const formattedErrors = result.error.format();
+      setErrors(formattedErrors);
+      return;
+    }
+
+    try {
+      await addUser(form.name, form.zip);
+      setForm({ name: "", zip: "" });
+      setErrors({});
+    } catch (err) {
+      console.error("Submission failed", err);
+    }
   };
 
   return (
-    <div style={{ padding: '20px' }}>
-      <h1>RentRedi Landlord Dashboard</h1>
-      
-      {/* Auth Section */}
-      <button onClick={UserRepository.login}>Login with Google</button>
-      
-      <form onSubmit={handleSubmit}>
-        <input placeholder="Name" value={name} onChange={e => setName(e.target.value)} />
-        <input placeholder="ZIP Code" value={zip} onChange={e => setZip(e.target.value)} />
-        <button type="submit">Add User</button>
-      </form>
-
-      {loading ? <p>Loading...</p> : (
-        <ul>
-          {users.map(u => (
-            <li key={u.id}>
-              {u.name} - {u.zip} ({u.lat}, {u.lon})
-              <button onClick={() => deleteUser(u.id)}>Delete</button>
-            </li>
-          ))}
-        </ul>
+    <form onSubmit={handleSubmit}>
+      <input
+        placeholder="Name"
+        value={form.name}
+        onChange={(e) => setForm({ ...form, name: e.target.value })}
+      />
+      {errors.name && (
+        <span style={{ color: "red" }}>{errors.name._errors[0]}</span>
       )}
-    </div>
+
+      <input
+        placeholder="ZIP Code"
+        value={form.zip}
+        onChange={(e) => setForm({ ...form, zip: e.target.value })}
+      />
+      {errors.zip && (
+        <span style={{ color: "red" }}>{errors.zip._errors[0]}</span>
+      )}
+
+      <button type="submit">Add User</button>
+    </form>
   );
 }
 
