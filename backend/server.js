@@ -19,7 +19,7 @@ const express = require("express");
 const axios = require("axios");
 const cors = require("cors");
 const { z } = require("zod");
-const { getWeatherData } = require("./services/weatherService");
+const weatherBreaker = require("./services/weatherCircuitBreaker");
 const { admin, db } = require("./firebaseConfig");
 const app = express();
 
@@ -67,7 +67,7 @@ app.post("/users", async (req, res) => {
     const validatedData = UserSchema.parse(req.body);
 
     const { name, zip } = validatedData;
-    const geoData = await getWeatherData(zip);
+    const geoData = await weatherBreaker.fire(zip);
 
     const newUserRef = db.ref("users").push();
     const userData = {
@@ -105,7 +105,7 @@ app.put("/users/:id", async (req, res) => {
     let updates = { name };
 
     if (zip && zip !== snapshot.val().zip) {
-      const geoData = await getWeatherData(zip);
+      const geoData = await weatherBreaker.fire(zip);
       updates = {
         ...updates,
         zip,
