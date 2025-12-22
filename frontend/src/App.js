@@ -42,9 +42,10 @@ function Navigation() {
           {user && (
             <>
               <div className="user-info">
-                <img src={user.photoURL} alt={user.displayName} className="user-photo" />
+                <div className="user-avatar">
+                  {user.email?.charAt(0).toUpperCase() || 'U'}
+                </div>
                 <div className="user-details">
-                  <span className="user-name">{user.displayName}</span>
                   <span className="user-email">{user.email}</span>
                 </div>
               </div>

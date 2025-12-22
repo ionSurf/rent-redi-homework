@@ -1,12 +1,7 @@
-import { db, auth, googleProvider } from "../firebaseConfig";
-import { ref, set, push, onValue, remove, update } from "firebase/database";
-import { signInWithPopup, signOut } from "firebase/auth";
+import { db } from "../firebaseConfig";
+import { ref, onValue, remove } from "firebase/database";
 
 export const UserRepository = {
-  // Authentication
-  login: () => signInWithPopup(auth, googleProvider),
-  logout: () => signOut(auth),
-
   // CRUD Operations
   subscribeToUsers: (callback) => {
     const userRef = ref(db, 'users');

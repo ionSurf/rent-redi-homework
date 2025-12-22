@@ -1,7 +1,11 @@
 import { useState, useEffect } from 'react';
 import { auth } from '../firebaseConfig';
-import { onAuthStateChanged } from 'firebase/auth';
-import { UserRepository } from '../repositories/UserRepository';
+import {
+  onAuthStateChanged,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut
+} from 'firebase/auth';
 
 export function useAuth() {
   const [user, setUser] = useState(null);
@@ -15,23 +19,32 @@ export function useAuth() {
     return () => unsubscribe();
   }, []);
 
-  const login = async () => {
+  const login = async (email, password) => {
     try {
-      await UserRepository.login();
+      await signInWithEmailAndPassword(auth, email, password);
     } catch (error) {
       console.error("Login failed:", error);
       throw error;
     }
   };
 
+  const signup = async (email, password) => {
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
+    } catch (error) {
+      console.error("Signup failed:", error);
+      throw error;
+    }
+  };
+
   const logout = async () => {
     try {
-      await UserRepository.logout();
+      await signOut(auth);
     } catch (error) {
       console.error("Logout failed:", error);
       throw error;
     }
   };
 
-  return { user, loading, login, logout };
+  return { user, loading, login, signup, logout };
 }

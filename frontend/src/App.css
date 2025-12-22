@@ -83,11 +83,17 @@ body {
   gap: 12px;
 }
 
-.user-photo {
+.user-avatar {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  border: 2px solid #667eea;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 16px;
 }
 
 .user-details {
@@ -96,15 +102,10 @@ body {
   align-items: flex-start;
 }
 
-.user-name {
-  font-weight: 600;
-  color: #333;
-  font-size: 14px;
-}
-
 .user-email {
-  font-size: 12px;
-  color: #999;
+  font-size: 14px;
+  color: #333;
+  font-weight: 600;
 }
 
 .logout-btn {
