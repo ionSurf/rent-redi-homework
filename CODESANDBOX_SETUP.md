@@ -8,15 +8,19 @@ The frontend automatically detects when running in CodeSandbox and configures th
 
 ### How It Works
 
-1. **CodeSandbox Detection**: The app checks for `process.env.CODESANDBOX_HOST`
-2. **Port Replacement**: Frontend gets port 3000, replaces it with 8080 for backend
-3. **HTTPS URL**: Constructs `https://{sandbox-id}-8080.csb.app`
+1. **CodeSandbox Detection**: Uses `@codesandbox/utils` library
+2. **Port Resolution**: `getCodeSandboxHost(8080)` returns the backend host
+3. **HTTPS URL**: Constructs `https://{backend-host}`
 
 Example:
-- Frontend `CODESANDBOX_HOST=w9pd4h-3000.csb.app`
-- Extracts sandbox ID: `w9pd4h`
+- Frontend calls: `getCodeSandboxHost(8080)`
+- Library returns: `w9pd4h-8080.csb.app`
 - Backend URL becomes: `https://w9pd4h-8080.csb.app`
-- Uses regex to replace: `-3000.csb.app` → `-8080.csb.app`
+
+The `@codesandbox/utils` package automatically handles:
+- Detecting CodeSandbox environment
+- Mapping port numbers to correct sandbox URLs
+- Working in both browser and Node.js contexts
 
 ## Setup Steps
 
@@ -83,9 +87,10 @@ Open browser console in the frontend, you should see:
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `CODESANDBOX_HOST` | Auto-set | - | Set automatically by CodeSandbox |
 | `REACT_APP_API_URL` | No | Auto-detect | Override API URL if needed |
 | `REACT_APP_FIREBASE_*` | Yes | - | Firebase configuration |
+
+**Note**: CodeSandbox detection is handled automatically by `@codesandbox/utils` package.
 
 ### Backend (`backend/.env`)
 
@@ -127,7 +132,7 @@ To fix:
 If you see mixed content warnings:
 - Make sure backend URL uses `https://` in CodeSandbox
 - Check `frontend/src/config/api.js`
-- Verify `CODESANDBOX_HOST` is set
+- Verify `@codesandbox/utils` is installed: `npm list @codesandbox/utils`
 
 ## Manual Override
 

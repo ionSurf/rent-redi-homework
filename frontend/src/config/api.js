@@ -2,24 +2,29 @@
  * API Configuration
  *
  * Determines the backend API URL based on the environment:
- * - CodeSandbox: Uses CODESANDBOX_HOST with port 8080
+ * - CodeSandbox: Uses @codesandbox/utils to get the backend host
  * - Development: Uses localhost:8080
  * - Production: Uses REACT_APP_API_URL environment variable
  */
 
 const getApiBaseUrl = () => {
-  // Check if running in CodeSandbox
-  if (process.env.CODESANDBOX_HOST) {
-    // Frontend gets host with port 3000 (e.g., w9pd4h-3000.csb.app)
-    // We need to replace the port with 8080 to reach the backend
-    const host = process.env.CODESANDBOX_HOST;
-    const backendHost = host.replace(/-\d+\.csb\.app$/, '-8080.csb.app');
-    return `https://${backendHost}`;
-  }
-
-  // Check for production API URL
+  // Check for production API URL first
   if (process.env.REACT_APP_API_URL) {
     return process.env.REACT_APP_API_URL;
+  }
+
+  // Try to detect CodeSandbox using @codesandbox/utils
+  try {
+    const { getCodeSandboxHost } = require('@codesandbox/utils');
+    const backendPort = 8080;
+    const host = getCodeSandboxHost(backendPort);
+
+    if (host) {
+      return `https://${host}`;
+    }
+  } catch (error) {
+    // @codesandbox/utils not available or not in CodeSandbox environment
+    // Fall through to localhost
   }
 
   // Default to localhost for local development
