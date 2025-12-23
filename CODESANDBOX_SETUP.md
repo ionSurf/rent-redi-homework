@@ -9,13 +9,13 @@ The frontend automatically detects when running in CodeSandbox and configures th
 ### How It Works
 
 1. **CodeSandbox Detection**: The app checks for `process.env.CODESANDBOX_HOST`
-2. **Port Replacement**: Replaces `$PORT` with `8080` (backend port)
-3. **HTTPS URL**: Constructs `https://{sandbox-id}-8080.csb.app`
+2. **Direct URL Usage**: Uses the provided host as-is (already includes port)
+3. **HTTPS URL**: Constructs `https://{CODESANDBOX_HOST}`
 
 Example:
-- `CODESANDBOX_HOST=rfjmrz-$PORT.csb.app`
-- Backend URL becomes: `https://rfjmrz-8080.csb.app`
-- Frontend URL becomes: `https://rfjmrz-3000.csb.app`
+- `CODESANDBOX_HOST=w9pd4h-8080.csb.app` (backend)
+- Backend URL becomes: `https://w9pd4h-8080.csb.app`
+- Frontend runs on: `https://w9pd4h-3000.csb.app`
 
 ## Setup Steps
 

@@ -10,11 +10,8 @@
 const getApiBaseUrl = () => {
   // Check if running in CodeSandbox
   if (process.env.CODESANDBOX_HOST) {
-    // CodeSandbox format: rfjmrz-$PORT.csb.app
-    const host = process.env.CODESANDBOX_HOST;
-    // Replace $PORT with actual backend port (8080)
-    const apiHost = host.replace('$PORT', '8080');
-    return `https://${apiHost}`;
+    // CodeSandbox provides full host with port already (e.g., w9pd4h-8080.csb.app)
+    return `https://${process.env.CODESANDBOX_HOST}`;
   }
 
   // Check for production API URL
