@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../config/api';
 import './AdminDashboard.css';
 
 function AdminDashboard() {
@@ -12,12 +13,12 @@ function AdminDashboard() {
       setError(null);
 
       // Fetch health status
-      const healthRes = await fetch('http://localhost:8080/health');
+      const healthRes = await fetch(`${API_BASE_URL}/health`);
       const healthData = await healthRes.json();
       setHealth(healthData);
 
       // Fetch metrics
-      const metricsRes = await fetch('http://localhost:8080/metrics');
+      const metricsRes = await fetch(`${API_BASE_URL}/metrics`);
       const metricsData = await metricsRes.json();
       setMetrics(metricsData);
 
