@@ -6,20 +6,19 @@
  */
 
 const admin = require("firebase-admin");
+require('dotenv').config();
 
 // Initialize Firebase Admin
 if (!admin.apps.length) {
   // Check if service account key exists
-  const fs = require('fs');
-  const serviceAccountPath = './serviceAccountKey.json';
 
-  if (fs.existsSync(serviceAccountPath)) {
+  if (process.env.FIREBASE_SERVICE_ACCOUNT != '') {
     // Load service account key
-    const serviceAccount = require(serviceAccountPath);
+    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
 
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
-      databaseURL: "https://rentredi-short-take-home-default-rtdb.firebaseio.com"
+      databaseURL: process.env.FIREBASE_DATABASE_URL
     });
 
     console.log("✅ Firebase initialized with service account");
@@ -30,7 +29,7 @@ if (!admin.apps.length) {
     console.warn("   For full access, add serviceAccountKey.json to backend/");
 
     admin.initializeApp({
-      databaseURL: "https://rentredi-short-take-home-default-rtdb.firebaseio.com"
+      databaseURL: process.env.FIREBASE_DATABASE_URL
     });
 
     console.log("✅ Firebase initialized in unauthenticated mode");
