@@ -63,6 +63,11 @@ echo ""
 print_step "Configuring gcloud..."
 gcloud config set project $PROJECT_ID
 
+# Get project number (needed for service accounts)
+print_info "Getting project number..."
+PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format='value(projectNumber)')
+print_info "Project Number: $PROJECT_NUMBER"
+
 # Enable required APIs (no need for Container Registry since using Docker Hub)
 print_step "Enabling required GCP APIs..."
 print_info "This may take a few minutes..."
@@ -135,12 +140,12 @@ if [ -n "$OPENWEATHER_KEY" ]; then
     echo -n "$OPENWEATHER_KEY" | gcloud secrets versions add openweather-api-key \
       --data-file=-
 
-    # Grant Cloud Run access
+    # Grant Cloud Run access (using Compute Engine default service account)
     gcloud secrets add-iam-policy-binding openweather-api-key \
-      --member="serviceAccount:${PROJECT_ID}@appspot.gserviceaccount.com" \
-      --role="roles/secretmanager.secretAccessor" 2>/dev/null || true
+      --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
+      --role="roles/secretmanager.secretAccessor"
 
-    print_info "OpenWeather API Key secret created"
+    print_info "OpenWeather API Key secret created and permissions granted"
 else
     print_warning "Skipping OpenWeather API Key setup"
 fi

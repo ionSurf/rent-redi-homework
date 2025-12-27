@@ -70,16 +70,22 @@ cat github-actions-key.json
 ### 3. Create GCP Secrets (for application)
 
 ```bash
+# Get project number (needed for service accounts)
+PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format='value(projectNumber)')
+echo "Project Number: $PROJECT_NUMBER"
+
 # Create OpenWeather API Key secret
 echo -n "your-openweather-api-key" | \
   gcloud secrets create openweather-api-key \
   --data-file=-
 
-# Grant Cloud Run access to the secret
+# Grant Cloud Run access to the secret (using Compute Engine default service account)
 gcloud secrets add-iam-policy-binding openweather-api-key \
-  --member="serviceAccount:${PROJECT_ID}@appspot.gserviceaccount.com" \
+  --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
   --role="roles/secretmanager.secretAccessor"
 ```
+
+**Note**: Cloud Run uses the Compute Engine default service account (`PROJECT_NUMBER-compute@developer.gserviceaccount.com`), not the App Engine service account.
 
 ### 4. Configure GitHub Secrets
 
