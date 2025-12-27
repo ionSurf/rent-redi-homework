@@ -1,5 +1,6 @@
-# Cloud Build CI/CD Pipeline for RentRedi App
-# This pipeline builds and deploys both backend and frontend to Cloud Run
+# Cloud Build Manual Deployment (Optional)
+# Main CI/CD is handled by GitHub Actions (.github/workflows/deploy.yml)
+# This file can be used for manual deployments via: gcloud builds submit
 
 steps:
   # Step 1: Run backend tests
