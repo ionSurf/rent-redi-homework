@@ -82,7 +82,7 @@ jobs:
             --region=${{ env.REGION }} \
             --platform=managed \
             --allow-unauthenticated \
-            --set-env-vars="PORT=8080,FIREBASE_DATABASE_URL=${{ secrets.FIREBASE_DATABASE_URL }}" \
+            --set-env-vars="FIREBASE_DATABASE_URL=${{ secrets.FIREBASE_DATABASE_URL }}" \
             --set-secrets="OPENWEATHER_API_KEY=openweather-api-key:latest" \
             --memory=512Mi \
             --cpu=1 \
