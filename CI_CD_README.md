@@ -17,8 +17,7 @@ This document provides a quick start guide for setting up CI/CD with GitHub Acti
 └──────┬────────────┘
        │
 ┌──────▼────────────┐
-│ Google Container  │
-│    Registry       │
+│   Docker Hub      │
 │  (Store Images)   │
 └──────┬────────────┘
        │
@@ -134,6 +133,20 @@ Jobs run in parallel where possible for faster builds.
 
 Add these in: **Settings → Secrets and variables → Actions**
 
+### Docker Hub Secrets
+
+| Secret Name | Description | Where to Get |
+|-------------|-------------|--------------|
+| `DOCKERHUB_USERNAME` | Your Docker Hub username | [Docker Hub Account](https://hub.docker.com) |
+| `DOCKERHUB_TOKEN` | Docker Hub access token | Settings → Security → New Access Token |
+
+**Create Docker Hub account (free):**
+1. Go to [hub.docker.com](https://hub.docker.com)
+2. Sign up for free account
+3. Go to Account Settings → Security → New Access Token
+4. Create token with Read & Write permissions
+5. Copy token to GitHub secrets
+
 ### GCP Secrets
 
 | Secret Name | Description | Example |
@@ -247,6 +260,12 @@ git push origin main
 - **This app usage**: ~5-10 minutes per deployment
 - **Monthly cost**: $0 (within free tier)
 
+### Docker Hub
+- **Free tier**: Unlimited public repositories
+- **Image pulls**: Unlimited for public images
+- **Storage**: Included
+- **Monthly cost**: $0
+
 ### Google Cloud Run
 - **Free tier**:
   - 2M requests/month
@@ -256,12 +275,15 @@ git push origin main
 - **Frontend**: ~$2-5/month
 - **Monthly cost**: ~$7-15 (often within free tier)
 
-### Google Container Registry
-- **Storage**: ~$0.026/GB/month
-- **Network**: Minimal
-- **Monthly cost**: ~$1-2
-
 **Total**: ~$0-15/month (often free!)
+
+### Cost Savings vs GCR
+
+| Service | GCR Approach | Docker Hub Approach |
+|---------|--------------|---------------------|
+| Container Registry | $1-2/month | **$0** (free) |
+| Everything else | Same | Same |
+| **Total Savings** | - | **$1-2/month** |
 
 ## Scaling Configuration
 
