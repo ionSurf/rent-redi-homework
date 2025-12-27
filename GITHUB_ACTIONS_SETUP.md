@@ -6,12 +6,12 @@ This guide covers setting up automated CI/CD using GitHub Actions with deploymen
 
 **CI/CD Flow:**
 ```
-GitHub Push → GitHub Actions (Test & Build) → Google Container Registry → Cloud Run (Deploy)
+GitHub Push → GitHub Actions (Test & Build) → Docker Hub → Cloud Run (Deploy)
 ```
 
 **Architecture:**
 - **CI/CD**: GitHub Actions (free for public repos, 2000 minutes/month for private)
-- **Container Registry**: Google Container Registry (GCR)
+- **Container Registry**: Docker Hub (free for public images)
 - **Hosting**: Google Cloud Run (serverless containers)
 
 ## Prerequisites
@@ -34,10 +34,9 @@ export REGION="us-central1"
 gcloud auth login
 gcloud config set project $PROJECT_ID
 
-# Enable required APIs
+# Enable required APIs (no Container Registry needed - using Docker Hub)
 gcloud services enable \
   run.googleapis.com \
-  containerregistry.googleapis.com \
   secretmanager.googleapis.com
 ```
 
@@ -49,14 +48,10 @@ gcloud iam service-accounts create github-actions \
   --description="Service account for GitHub Actions" \
   --display-name="GitHub Actions"
 
-# Grant necessary roles
+# Grant necessary roles (no storage.admin needed - using Docker Hub)
 gcloud projects add-iam-policy-binding $PROJECT_ID \
   --member="serviceAccount:github-actions@${PROJECT_ID}.iam.gserviceaccount.com" \
   --role="roles/run.admin"
-
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member="serviceAccount:github-actions@${PROJECT_ID}.iam.gserviceaccount.com" \
-  --role="roles/storage.admin"
 
 gcloud projects add-iam-policy-binding $PROJECT_ID \
   --member="serviceAccount:github-actions@${PROJECT_ID}.iam.gserviceaccount.com" \
@@ -91,6 +86,21 @@ gcloud secrets add-iam-policy-binding openweather-api-key \
 Go to your GitHub repository → Settings → Secrets and variables → Actions → New repository secret
 
 Add the following secrets:
+
+#### Docker Hub Configuration
+| Secret Name | Value | Description |
+|-------------|-------|-------------|
+| `DOCKERHUB_USERNAME` | `your-username` | Your Docker Hub username |
+| `DOCKERHUB_TOKEN` | `your-access-token` | Docker Hub access token |
+
+**How to get Docker Hub credentials:**
+1. Create free account at [hub.docker.com](https://hub.docker.com)
+2. Go to Account Settings → Security
+3. Click "New Access Token"
+4. Give it a description (e.g., "GitHub Actions")
+5. Select "Read, Write" permissions
+6. Copy the token (save it immediately - shown only once)
+7. Add both username and token to GitHub Secrets
 
 #### GCP Configuration
 | Secret Name | Value | Description |

@@ -63,12 +63,11 @@ echo ""
 print_step "Configuring gcloud..."
 gcloud config set project $PROJECT_ID
 
-# Enable required APIs
+# Enable required APIs (no need for Container Registry since using Docker Hub)
 print_step "Enabling required GCP APIs..."
 print_info "This may take a few minutes..."
 gcloud services enable \
   run.googleapis.com \
-  containerregistry.googleapis.com \
   secretmanager.googleapis.com
 
 print_info "APIs enabled successfully"
@@ -86,17 +85,12 @@ gcloud iam service-accounts create $SA_NAME \
   --display-name="GitHub Actions" 2>/dev/null || \
   print_warning "Service account already exists"
 
-# Grant necessary roles
+# Grant necessary roles (only need Cloud Run access, not storage since using Docker Hub)
 print_info "Granting IAM roles..."
 
 gcloud projects add-iam-policy-binding $PROJECT_ID \
   --member="serviceAccount:${SA_EMAIL}" \
   --role="roles/run.admin" \
-  --condition=None
-
-gcloud projects add-iam-policy-binding $PROJECT_ID \
-  --member="serviceAccount:${SA_EMAIL}" \
-  --role="roles/storage.admin" \
   --condition=None
 
 gcloud projects add-iam-policy-binding $PROJECT_ID \
@@ -159,6 +153,16 @@ cat > github-secrets.txt <<EOF
 # GitHub Secrets Configuration
 # Add these secrets to your GitHub repository:
 # Settings → Secrets and variables → Actions → New repository secret
+
+## Docker Hub Configuration
+DOCKERHUB_USERNAME=your-docker-hub-username
+DOCKERHUB_TOKEN=your-docker-hub-access-token
+
+# How to get Docker Hub credentials:
+# 1. Create account at https://hub.docker.com (free)
+# 2. Go to Account Settings → Security → New Access Token
+# 3. Create token with Read & Write permissions
+# 4. Copy username and token to GitHub secrets
 
 ## GCP Configuration
 GCP_PROJECT_ID=$PROJECT_ID
