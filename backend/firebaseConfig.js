@@ -12,7 +12,7 @@ require('dotenv').config();
 if (!admin.apps.length) {
   // Check if service account key exists
 
-  if (process.env.FIREBASE_SERVICE_ACCOUNT != '') {
+  if (process.env.FIREBASE_SERVICE_ACCOUNT && process.env.FIREBASE_SERVICE_ACCOUNT !== '') {
     // Load service account key
     const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
 
