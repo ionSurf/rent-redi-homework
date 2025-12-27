@@ -44,3 +44,6 @@ coverage
 # GCP
 .gcloud
 .config
+
+github-actions-key.json
+github-secrets.txt
