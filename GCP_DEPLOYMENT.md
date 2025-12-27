@@ -41,14 +41,17 @@ gcloud services enable \
 ### 2. Create Secrets in Secret Manager
 
 ```bash
+# Get project number (needed for service accounts)
+PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format='value(projectNumber)')
+
 # Create OpenWeather API Key secret
 echo -n "your-openweather-api-key" | \
   gcloud secrets create openweather-api-key \
   --data-file=-
 
-# Grant Cloud Run access to the secret
+# Grant Cloud Run access to the secret (using Compute Engine default service account)
 gcloud secrets add-iam-policy-binding openweather-api-key \
-  --member="serviceAccount:${PROJECT_ID}@appspot.gserviceaccount.com" \
+  --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
   --role="roles/secretmanager.secretAccessor"
 ```
 
@@ -63,9 +66,9 @@ You have two options:
 gcloud secrets create firebase-service-account \
   --data-file=backend/serviceAccountKey.json
 
-# Grant Cloud Run access
+# Grant Cloud Run access (using Compute Engine default service account)
 gcloud secrets add-iam-policy-binding firebase-service-account \
-  --member="serviceAccount:${PROJECT_ID}@appspot.gserviceaccount.com" \
+  --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
   --role="roles/secretmanager.secretAccessor"
 ```
 

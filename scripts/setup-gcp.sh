@@ -63,6 +63,11 @@ echo ""
 print_step "Setting GCP project..."
 gcloud config set project $PROJECT_ID
 
+# Get project number (needed for service accounts)
+print_info "Getting project number..."
+PROJECT_NUMBER=$(gcloud projects describe $PROJECT_ID --format='value(projectNumber)')
+print_info "Project Number: $PROJECT_NUMBER"
+
 # Enable required APIs
 print_step "Enabling required GCP APIs..."
 print_info "This may take a few minutes..."
@@ -88,12 +93,12 @@ if [ -n "$OPENWEATHER_KEY" ]; then
     echo -n "$OPENWEATHER_KEY" | gcloud secrets versions add openweather-api-key \
       --data-file=-
 
-    # Grant Cloud Run access
+    # Grant Cloud Run access (using Compute Engine default service account)
     gcloud secrets add-iam-policy-binding openweather-api-key \
-      --member="serviceAccount:${PROJECT_ID}@appspot.gserviceaccount.com" \
-      --role="roles/secretmanager.secretAccessor" 2>/dev/null || true
+      --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
+      --role="roles/secretmanager.secretAccessor"
 
-    print_info "OpenWeather API Key secret created"
+    print_info "OpenWeather API Key secret created and permissions granted"
 else
     print_warning "Skipping OpenWeather API Key setup"
 fi
@@ -112,12 +117,12 @@ if [[ "$SETUP_FIREBASE" =~ ^[Yy]$ ]]; then
         gcloud secrets versions add firebase-service-account \
           --data-file="$FIREBASE_KEY_PATH"
 
-        # Grant Cloud Run access
+        # Grant Cloud Run access (using Compute Engine default service account)
         gcloud secrets add-iam-policy-binding firebase-service-account \
-          --member="serviceAccount:${PROJECT_ID}@appspot.gserviceaccount.com" \
-          --role="roles/secretmanager.secretAccessor" 2>/dev/null || true
+          --member="serviceAccount:${PROJECT_NUMBER}-compute@developer.gserviceaccount.com" \
+          --role="roles/secretmanager.secretAccessor"
 
-        print_info "Firebase service account secret created"
+        print_info "Firebase service account secret created and permissions granted"
     else
         print_error "File not found: $FIREBASE_KEY_PATH"
         print_warning "You can create this secret later with:"
