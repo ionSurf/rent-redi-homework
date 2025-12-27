@@ -5,6 +5,8 @@
   "main": "server.js",
   "scripts": {
     "test": "jest --verbose --coverage",
+    "test:mock": "jest __tests__/weatherService.mock.test.js --verbose",
+    "test:integration": "jest --testPathPatterns=integration --verbose",
     "test:watch": "jest --watch",
     "test:api": "jest __tests__/api.test.js --verbose",
     "test:weather": "jest __tests__/weatherService.test.js --verbose",
