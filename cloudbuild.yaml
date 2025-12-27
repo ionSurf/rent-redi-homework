@@ -48,14 +48,14 @@ steps:
       - '--region=${_REGION}'
       - '--platform=managed'
       - '--allow-unauthenticated'
-      - '--set-env-vars=PORT=8080,FIREBASE_DATABASE_URL=${_FIREBASE_DATABASE_URL}'
+      - '--set-env-vars=FIREBASE_DATABASE_URL=${_FIREBASE_DATABASE_URL}'
       - '--set-secrets=OPENWEATHER_API_KEY=${_OPENWEATHER_API_KEY_SECRET}:latest'
       - '--memory=512Mi'
       - '--cpu=1'
       - '--min-instances=0'
       - '--max-instances=10'
       - '--timeout=300'
-      # - '--port=8080'
+      - '--port=8080'
     waitFor: ['backend-push']
 
   # Step 5: Get backend URL for frontend
