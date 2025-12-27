@@ -1,0 +1,183 @@
+name: Deploy to GCP Cloud Run
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: ${{ secrets.GCP_REGION }}
+  BACKEND_SERVICE: rentredi-backend
+  FRONTEND_SERVICE: rentredi-frontend
+
+jobs:
+  # Backend: Test, Build, and Deploy
+  backend:
+    name: Backend CI/CD
+    runs-on: ubuntu-latest
+
+    outputs:
+      backend-url: ${{ steps.deploy-backend.outputs.url }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+
+      - name: Run backend tests
+        working-directory: backend
+        run: npm test
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for GCR
+        run: |
+          gcloud auth configure-docker
+
+      - name: Build backend Docker image
+        working-directory: backend
+        run: |
+          docker build \
+            -t gcr.io/${{ env.PROJECT_ID }}/${{ env.BACKEND_SERVICE }}:${{ github.sha }} \
+            -t gcr.io/${{ env.PROJECT_ID }}/${{ env.BACKEND_SERVICE }}:latest \
+            .
+
+      - name: Push backend image to GCR
+        run: |
+          docker push gcr.io/${{ env.PROJECT_ID }}/${{ env.BACKEND_SERVICE }}:${{ github.sha }}
+          docker push gcr.io/${{ env.PROJECT_ID }}/${{ env.BACKEND_SERVICE }}:latest
+
+      - name: Deploy backend to Cloud Run
+        id: deploy-backend
+        if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+        run: |
+          gcloud run deploy ${{ env.BACKEND_SERVICE }} \
+            --image=gcr.io/${{ env.PROJECT_ID }}/${{ env.BACKEND_SERVICE }}:${{ github.sha }} \
+            --region=${{ env.REGION }} \
+            --platform=managed \
+            --allow-unauthenticated \
+            --set-env-vars="PORT=8080,FIREBASE_DATABASE_URL=${{ secrets.FIREBASE_DATABASE_URL }}" \
+            --set-secrets="OPENWEATHER_API_KEY=openweather-api-key:latest" \
+            --memory=512Mi \
+            --cpu=1 \
+            --min-instances=0 \
+            --max-instances=10 \
+            --timeout=300 \
+            --port=8080 \
+            --quiet
+
+          # Get the backend URL
+          BACKEND_URL=$(gcloud run services describe ${{ env.BACKEND_SERVICE }} \
+            --region=${{ env.REGION }} \
+            --format='value(status.url)')
+
+          echo "url=$BACKEND_URL" >> $GITHUB_OUTPUT
+          echo "Backend deployed to: $BACKEND_URL"
+
+  # Frontend: Build and Deploy
+  frontend:
+    name: Frontend CI/CD
+    runs-on: ubuntu-latest
+    needs: backend
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for GCR
+        run: |
+          gcloud auth configure-docker
+
+      - name: Build frontend Docker image
+        working-directory: frontend
+        env:
+          BACKEND_URL: ${{ needs.backend.outputs.backend-url }}
+        run: |
+          docker build \
+            --build-arg REACT_APP_API_URL=${{ env.BACKEND_URL }} \
+            --build-arg REACT_APP_FIREBASE_API_KEY=${{ secrets.FIREBASE_API_KEY }} \
+            --build-arg REACT_APP_FIREBASE_AUTH_DOMAIN=${{ secrets.FIREBASE_AUTH_DOMAIN }} \
+            --build-arg REACT_APP_FIREBASE_DATABASE_URL=${{ secrets.FIREBASE_DATABASE_URL }} \
+            --build-arg REACT_APP_FIREBASE_PROJECT_ID=${{ secrets.FIREBASE_PROJECT_ID }} \
+            --build-arg REACT_APP_FIREBASE_STORAGE_BUCKET=${{ secrets.FIREBASE_STORAGE_BUCKET }} \
+            --build-arg REACT_APP_FIREBASE_MESSAGING_SENDER_ID=${{ secrets.FIREBASE_MESSAGING_SENDER_ID }} \
+            --build-arg REACT_APP_FIREBASE_APP_ID=${{ secrets.FIREBASE_APP_ID }} \
+            -t gcr.io/${{ env.PROJECT_ID }}/${{ env.FRONTEND_SERVICE }}:${{ github.sha }} \
+            -t gcr.io/${{ env.PROJECT_ID }}/${{ env.FRONTEND_SERVICE }}:latest \
+            .
+
+      - name: Push frontend image to GCR
+        run: |
+          docker push gcr.io/${{ env.PROJECT_ID }}/${{ env.FRONTEND_SERVICE }}:${{ github.sha }}
+          docker push gcr.io/${{ env.PROJECT_ID }}/${{ env.FRONTEND_SERVICE }}:latest
+
+      - name: Deploy frontend to Cloud Run
+        id: deploy-frontend
+        run: |
+          gcloud run deploy ${{ env.FRONTEND_SERVICE }} \
+            --image=gcr.io/${{ env.PROJECT_ID }}/${{ env.FRONTEND_SERVICE }}:${{ github.sha }} \
+            --region=${{ env.REGION }} \
+            --platform=managed \
+            --allow-unauthenticated \
+            --memory=256Mi \
+            --cpu=1 \
+            --min-instances=0 \
+            --max-instances=5 \
+            --timeout=60 \
+            --port=8080 \
+            --quiet
+
+          # Get the frontend URL
+          FRONTEND_URL=$(gcloud run services describe ${{ env.FRONTEND_SERVICE }} \
+            --region=${{ env.REGION }} \
+            --format='value(status.url)')
+
+          echo "Frontend deployed to: $FRONTEND_URL"
+
+      - name: Display deployment summary
+        run: |
+          echo "============================================"
+          echo "Deployment Complete! 🚀"
+          echo "============================================"
+          echo ""
+          echo "Backend URL:  ${{ needs.backend.outputs.backend-url }}"
+          echo "Health:       ${{ needs.backend.outputs.backend-url }}/health"
+          echo "Metrics:      ${{ needs.backend.outputs.backend-url }}/metrics"
+          echo ""
+          FRONTEND_URL=$(gcloud run services describe ${{ env.FRONTEND_SERVICE }} \
+            --region=${{ env.REGION }} \
+            --format='value(status.url)')
+          echo "Frontend URL: $FRONTEND_URL"
+          echo "Admin Panel:  $FRONTEND_URL/admin"
+          echo ""
+          echo "============================================"
