@@ -1,16 +1,35 @@
 {
-  "name": "nodejs-sandbox",
+  "name": "rent-redi-homework",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "RentRedi Full Stack Application",
+  "private": true,
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
   "scripts": {
-    "start-legacy": "node --watch index.js",
-    "install-all": "npm install && cd backend && npm install && cd ../frontend && npm install",
     "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
-    "start:backend": "cd backend && node server.js",
-    "start:frontend": "cd frontend && npm start"
+    "start:backend": "npm run start --workspace=backend",
+    "start:frontend": "npm run start --workspace=frontend",
+    "start-legacy": "node --watch index.js",
+    "install-all": "npm install",
+    "lint": "npm run lint --workspaces --if-present",
+    "lint:backend": "npm run lint --workspace=backend",
+    "lint:frontend": "npm run lint --workspace=frontend",
+    "lint:fix": "npm run lint:fix --workspaces --if-present",
+    "lint:fix:backend": "npm run lint:fix --workspace=backend",
+    "lint:fix:frontend": "npm run lint:fix --workspace=frontend",
+    "format": "npm run format --workspaces --if-present",
+    "format:backend": "npm run format --workspace=backend",
+    "format:frontend": "npm run format --workspace=frontend",
+    "format:check": "npm run format:check --workspaces --if-present",
+    "format:check:backend": "npm run format:check --workspace=backend",
+    "format:check:frontend": "npm run format:check --workspace=frontend",
+    "test": "npm run test --workspaces --if-present",
+    "test:backend": "npm run test:mock --workspace=backend",
+    "test:frontend": "npm test --workspace=frontend -- --watchAll=false"
   },
-  "keywords": [],
+  "keywords": ["rentredi", "full-stack", "firebase", "cloud-run"],
   "author": "Javier Prieto",
   "license": "MIT",
   "dependencies": {

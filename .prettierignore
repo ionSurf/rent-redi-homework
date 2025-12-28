@@ -1,0 +1,10 @@
+node_modules
+coverage
+dist
+build
+*.log
+package-lock.json
+.git
+.github
+docs
+scripts/*.sh

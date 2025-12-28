@@ -83,6 +83,46 @@ rent-redi-homework/
 - Firebase project with Realtime Database
 - OpenWeather API key (already included: `7afa46f2e91768e7eeeb9001ce40de19`)
 
+### Quick Start (Workspace Setup)
+
+This project uses npm workspaces for managing the monorepo. From the root directory, you can run:
+
+```bash
+# Install all dependencies for backend and frontend
+npm install
+
+# Run linting across all workspaces
+npm run lint
+
+# Fix linting issues across all workspaces
+npm run lint:fix
+
+# Format code across all workspaces
+npm run format
+
+# Check formatting across all workspaces
+npm run format:check
+
+# Run tests across all workspaces
+npm run test
+
+# Start both backend and frontend concurrently
+npm start
+```
+
+You can also target specific workspaces:
+
+```bash
+# Lint only backend
+npm run lint:backend
+
+# Format only frontend
+npm run format:frontend
+
+# Test only backend
+npm run test:backend
+```
+
 ### Backend Setup
 
 1. Navigate to the backend directory:
