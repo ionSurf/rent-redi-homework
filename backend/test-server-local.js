@@ -23,7 +23,7 @@ console.log("");
 
 try {
   console.log("Loading firebaseConfig.js...");
-  const firebaseConfig = require("./firebaseConfig");
+  require("./firebaseConfig");
   console.log("✓ Firebase config loaded successfully");
   console.log("");
 

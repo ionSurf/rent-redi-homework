@@ -16,7 +16,6 @@ Requirements
 */
 
 const express = require("express");
-const axios = require("axios");
 const cors = require("cors");
 const { z } = require("zod");
 const weatherBreaker = require("./services/weatherCircuitBreaker");
