@@ -17,12 +17,10 @@ Requirements
 
 const express = require("express");
 const cors = require("cors");
-const { z } = require("zod");
 const weatherBreaker = require("./services/weatherCircuitBreaker");
 const { db } = require("./firebaseConfig");
 const { telemetryMiddleware, getMetrics } = require("./middleware/telemetry.middleware");
-const { UserSchema } = require("./models/user.model");
-const userService = require("./services/user.service");
+const userController = require("./controllers/user.controller");
 const app = express();
 
 app.use(cors());
@@ -81,64 +79,19 @@ app.get("/health", async (req, res) => {
 app.get("/metrics", getMetrics);
 
 // Get all
-app.get("/users", async (_, res) => {
-  console.log("Get all users");
-  const users = await userService.getAllUsers();
-  res.json(users);
-});
+app.get("/users", userController.getAllUsers);
 
 // Get by user_id
-app.get("/users/:id", async (req, res) => {
-  const { id } = req.params;
-  console.log(`Get user with id=${id}`);
-  const user = await userService.getUserById(id);
-  res.json(user);
-});
+app.get("/users/:id", userController.getUserById);
 
 // Create
-app.post("/users", async (req, res) => {
-  try {
-    // Validate the request body against the schema
-    const validatedData = UserSchema.parse(req.body);
-
-    const createdUser = await userService.createUser(validatedData);
-    res.status(201).json(createdUser);
-  } catch (err) {
-    if (err instanceof z.ZodError) {
-      // Return a clean 400 error with Zod's specific issues
-      return res.status(400).json({ errors: err.errors });
-    }
-    res.status(500).json({ error: err.message });
-  }
-});
+app.post("/users", userController.createUser);
 
 // Update
-app.put("/users/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    // Validate the request body against the schema
-    const validatedData = UserSchema.parse(req.body);
-
-    const updatedUser = await userService.updateUser(id, validatedData);
-    res.json(updatedUser);
-  } catch (err) {
-    if (err instanceof z.ZodError) {
-      // Return a clean 400 error with Zod's specific issues
-      return res.status(400).json({ errors: err.errors });
-    }
-
-    // Handle custom error status codes (like 404 from service)
-    const statusCode = err.statusCode || 500;
-    res.status(statusCode).json({ error: err.message });
-  }
-});
+app.put("/users/:id", userController.updateUser);
 
 // Delete
-app.delete("/users/:id", async (req, res) => {
-  await userService.deleteUser(req.params.id);
-  res.status(204).send();
-});
+app.delete("/users/:id", userController.deleteUser);
 
 // Only start server if not being imported (for testing)
 if (require.main === module) {
