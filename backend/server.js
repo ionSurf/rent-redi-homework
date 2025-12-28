@@ -20,7 +20,8 @@ const cors = require("cors");
 const { z } = require("zod");
 const weatherBreaker = require("./services/weatherCircuitBreaker");
 const { admin, db } = require("./firebaseConfig");
-const { telemetryMiddleware, getMetrics } = require("./middleware/telemetry");
+const { telemetryMiddleware, getMetrics } = require("./middleware/telemetry.middleware");
+const { UserSchema, createUserObject, createUpdateObject } = require("./models/user.model");
 const app = express();
 
 app.use(cors());
@@ -28,12 +29,6 @@ app.use(express.json());
 
 // SRE: Apply telemetry middleware to all routes
 app.use(telemetryMiddleware);
-
-// User schema validation
-const UserSchema = z.object({
-  name: z.string().min(2, "Name must be at least 2 characters"),
-  zip: z.string().regex(/^\d{5}$/, "Must be a 5-digit ZIP code")
-});
 
 app.get("/", (req, res) => {
   console.log('triggering  "/" endpoint...');
@@ -111,16 +106,13 @@ app.post("/users", async (req, res) => {
     const geoData = await weatherBreaker.fire(zip);
 
     const newUserRef = db.ref("users").push();
-    const userData = {
-      id: newUserRef.key,
+    const userData = createUserObject(
+      newUserRef.key,
       name,
       zip,
-      latitude: geoData.lat,
-      longitude: geoData.lon,
-      timezone: geoData.timezone,
-      locationName: geoData.locationName,
-      createdAt: admin.database.ServerValue.TIMESTAMP
-    };
+      geoData,
+      admin.database.ServerValue.TIMESTAMP
+    );
 
     await newUserRef.set(userData);
     res.status(201).json(userData);
@@ -147,18 +139,13 @@ app.put("/users/:id", async (req, res) => {
 
     if (!snapshot.exists()) return res.status(404).json({ error: "User not found" });
 
-    let updates = { name };
+    let updates;
 
     if (zip && zip !== snapshot.val().zip) {
       const geoData = await weatherBreaker.fire(zip);
-      updates = {
-        ...updates,
-        zip,
-        latitude: geoData.lat,
-        longitude: geoData.lon,
-        timezone: geoData.timezone,
-        locationName: geoData.locationName
-      };
+      updates = createUpdateObject(name, zip, geoData);
+    } else {
+      updates = createUpdateObject(name);
     }
 
     await userRef.update(updates);
