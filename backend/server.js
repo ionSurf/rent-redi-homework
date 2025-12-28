@@ -120,7 +120,7 @@ app.post("/users", async (req, res) => {
       longitude: geoData.lon,
       timezone: geoData.timezone,
       locationName: geoData.locationName,
-      createdAt: admin.database.ServerValue.TIMESTAMP,
+      createdAt: admin.database.ServerValue.TIMESTAMP
     };
 
     await newUserRef.set(userData);
@@ -182,7 +182,7 @@ app.delete("/users/:id", async (req, res) => {
 // Only start server if not being imported (for testing)
 if (require.main === module) {
   const PORT = process.env.PORT || 8080;
-  const HOST = '0.0.0.0'; // Bind to all interfaces for Cloud Run
+  const HOST = "0.0.0.0"; // Bind to all interfaces for Cloud Run
   app.listen(PORT, HOST, () => {
     console.log(`Server running on http://${HOST}:${PORT}`);
   });

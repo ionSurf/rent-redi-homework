@@ -2,8 +2,7 @@
 const axios = require("axios");
 const axiosRetry = require("axios-retry").default;
 
-const API_KEY =
-  process.env.OPENWEATHER_API_KEY || "7afa46f2e91768e7eeeb9001ce40de19";
+const API_KEY = process.env.OPENWEATHER_API_KEY || "7afa46f2e91768e7eeeb9001ce40de19";
 const BASE_URL = "https://api.openweathermap.org/data/2.5/weather";
 
 // SRE Principle: Resilience
@@ -13,7 +12,7 @@ axiosRetry(axios, {
   retryDelay: axiosRetry.exponentialDelay, // 200ms, 400ms, 800ms...
   onRetry: (retryCount, error) => {
     console.warn(`Retry attempt #${retryCount} due to: ${error.message}`);
-  },
+  }
 });
 
 /**
@@ -31,9 +30,9 @@ async function getWeatherData(zipCode) {
     const response = await axios.get(BASE_URL, {
       params: {
         zip: `${zipCode},us`,
-        appid: API_KEY,
+        appid: API_KEY
       },
-      timeout: 5000, // SRE: Don't let a hanging dependency block your event loop
+      timeout: 5000 // SRE: Don't let a hanging dependency block your event loop
     });
 
     const { coord, timezone, name } = response.data;
@@ -45,7 +44,7 @@ async function getWeatherData(zipCode) {
       lat: coord.lat,
       lon: coord.lon,
       timezone, // Offset in seconds from UTC
-      locationName: name, // Added for extra UI polish
+      locationName: name // Added for extra UI polish
     };
   } catch (error) {
     // 3. Sophisticated Error Handling
@@ -55,13 +54,12 @@ async function getWeatherData(zipCode) {
       const status = error.response.status;
       if (status === 404) throw new Error(`ZIP code ${zipCode} not found.`);
       if (status === 401) throw new Error("Weather API Key is invalid.");
-      if (status === 403) throw new Error("Weather API access forbidden. Check API key permissions.");
+      if (status === 403)
+        throw new Error("Weather API access forbidden. Check API key permissions.");
       if (status === 429) throw new Error("Weather API rate limit exceeded.");
     } else if (error.request) {
       // The request was made but no response was received (Network issue)
-      throw new Error(
-        "Weather service is currently unreachable. Please try again later."
-      );
+      throw new Error("Weather service is currently unreachable. Please try again later.");
     }
 
     console.error(`Unexpected WeatherService Error: ${error.message}`);

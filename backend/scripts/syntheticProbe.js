@@ -2,9 +2,9 @@
 // SRE: Synthetic Monitoring Probe
 // Simulates user behavior to continuously verify system health
 
-const axios = require('axios');
+const axios = require("axios");
 
-const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8080';
+const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8080";
 const PROBE_INTERVAL = 30000; // 30 seconds
 const TIMEOUT = 5000; // 5 second timeout
 
@@ -17,11 +17,11 @@ const MAX_FAILURES_BEFORE_ALERT = 3;
 async function probeHealth() {
   const results = {
     timestamp: new Date().toISOString(),
-    backend: '❌ DOWN',
-    database: '❌ DOWN',
-    weatherAPI: '❌ DOWN',
+    backend: "❌ DOWN",
+    database: "❌ DOWN",
+    weatherAPI: "❌ DOWN",
     latency: 0,
-    status: 'FAIL'
+    status: "FAIL"
   };
 
   try {
@@ -32,10 +32,10 @@ async function probeHealth() {
     results.latency = Date.now() - start;
 
     if (res.status === 200) {
-      results.backend = '✅ UP';
-      results.database = res.data.checks.database ? '✅ UP' : '⚠️  DEGRADED';
-      results.weatherAPI = res.data.checks.weatherAPI ? '✅ UP' : '⚠️  DEGRADED';
-      results.status = res.data.status === 'healthy' ? 'PASS' : 'DEGRADED';
+      results.backend = "✅ UP";
+      results.database = res.data.checks.database ? "✅ UP" : "⚠️  DEGRADED";
+      results.weatherAPI = res.data.checks.weatherAPI ? "✅ UP" : "⚠️  DEGRADED";
+      results.status = res.data.status === "healthy" ? "PASS" : "DEGRADED";
 
       // Reset failure counter on success
       consecutiveFailures = 0;
@@ -84,7 +84,7 @@ async function probeMetrics() {
       };
     }
   } catch (e) {
-    console.error('Failed to fetch metrics:', e.message);
+    console.error("Failed to fetch metrics:", e.message);
     return null;
   }
 }
@@ -94,8 +94,8 @@ async function probeMetrics() {
  */
 async function probeEndToEnd() {
   const testUser = {
-    name: 'SRE Probe User',
-    zip: '10001'
+    name: "SRE Probe User",
+    zip: "10001"
   };
 
   try {
@@ -125,13 +125,13 @@ async function probeEndToEnd() {
     });
 
     return {
-      status: '✅ PASS',
+      status: "✅ PASS",
       createLatency: `${createLatency}ms`,
       readLatency: `${readLatency}ms`
     };
   } catch (e) {
     return {
-      status: '❌ FAIL',
+      status: "❌ FAIL",
       error: e.message
     };
   }
@@ -141,9 +141,9 @@ async function probeEndToEnd() {
  * Main probe execution loop
  */
 async function runProbe() {
-  console.log('\n' + '='.repeat(60));
-  console.log('🔍 Running Synthetic Probe...');
-  console.log('='.repeat(60));
+  console.log("\n" + "=".repeat(60));
+  console.log("🔍 Running Synthetic Probe...");
+  console.log("=".repeat(60));
 
   // Health check probe
   const healthResults = await probeHealth();
@@ -152,7 +152,7 @@ async function runProbe() {
   // Metrics check
   const metricsResults = await probeMetrics();
   if (metricsResults) {
-    console.log('\n📊 Current Metrics:');
+    console.log("\n📊 Current Metrics:");
     console.table(metricsResults);
   }
 
@@ -160,12 +160,12 @@ async function runProbe() {
   const now = Date.now();
   if (!runProbe.lastE2E || now - runProbe.lastE2E > 120000) {
     const e2eResults = await probeEndToEnd();
-    console.log('\n🔄 End-to-End Test:');
+    console.log("\n🔄 End-to-End Test:");
     console.table(e2eResults);
     runProbe.lastE2E = now;
   }
 
-  console.log('\n' + '='.repeat(60) + '\n');
+  console.log("\n" + "=".repeat(60) + "\n");
 }
 
 // Start the probe
@@ -179,7 +179,7 @@ runProbe();
 setInterval(runProbe, PROBE_INTERVAL);
 
 // Graceful shutdown
-process.on('SIGINT', () => {
-  console.log('\n👋 Stopping Synthetic Probe...');
+process.on("SIGINT", () => {
+  console.log("\n👋 Stopping Synthetic Probe...");
   process.exit(0);
 });

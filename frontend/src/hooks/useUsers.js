@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react';
-import { UserRepository } from '../repositories/UserRepository';
+import { useState, useEffect } from "react";
+import { UserRepository } from "../repositories/UserRepository";
 
 export function useUsers() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = UserRepository.subscribeToUsers((data) => {
+    const unsubscribe = UserRepository.subscribeToUsers(data => {
       setUsers(data);
       setLoading(false);
     });
