@@ -7,6 +7,7 @@
 const express = require("express");
 const cors = require("cors");
 const { telemetryMiddleware } = require("../middleware/telemetry.middleware");
+const { errorHandler, notFound } = require("../middleware/error.middleware");
 const userRoutes = require("../routes/user.routes");
 const healthRoutes = require("../routes/health.routes");
 
@@ -40,6 +41,10 @@ const createApp = () => {
   // Mount routes
   app.use("/", healthRoutes);
   app.use("/users", userRoutes);
+
+  // Error handling middleware (must be last)
+  app.use(notFound);
+  app.use(errorHandler);
 
   return app;
 };

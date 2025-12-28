@@ -4,6 +4,8 @@
  * Centralized error handling for the application
  */
 
+const { z } = require("zod");
+
 /**
  * Global error handler middleware
  * Catches all errors from async handlers and formats them consistently
@@ -21,6 +23,14 @@ const errorHandler = (err, req, res, _next) => {
     path: req.path,
     method: req.method
   });
+
+  // Handle Zod validation errors
+  if (err instanceof z.ZodError) {
+    return res.status(400).json({
+      success: false,
+      errors: err.errors
+    });
+  }
 
   // Default error status and message
   const statusCode = err.statusCode || 500;
