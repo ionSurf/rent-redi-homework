@@ -1,18 +1,18 @@
-import { useState, useEffect } from 'react';
-import { auth } from '../firebaseConfig';
+import { useState, useEffect } from "react";
+import { auth } from "../firebaseConfig";
 import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   signOut
-} from 'firebase/auth';
+} from "firebase/auth";
 
 export function useAuth() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    const unsubscribe = onAuthStateChanged(auth, currentUser => {
       setUser(currentUser);
       setLoading(false);
     });

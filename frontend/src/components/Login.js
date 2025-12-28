@@ -1,18 +1,18 @@
-import React, { useState } from 'react';
-import { useAuth } from '../hooks/useAuth';
-import './Login.css';
+import React, { useState } from "react";
+import { useAuth } from "../hooks/useAuth";
+import "./Login.css";
 
 function Login() {
   const { login, signup } = useAuth();
   const [isSignup, setIsSignup] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = async e => {
     e.preventDefault();
-    setError('');
+    setError("");
     setLoading(true);
 
     try {
@@ -25,20 +25,20 @@ function Login() {
       console.error("Auth error:", error);
 
       // User-friendly error messages
-      if (error.code === 'auth/invalid-email') {
-        setError('Invalid email address');
-      } else if (error.code === 'auth/user-not-found') {
-        setError('No account found with this email');
-      } else if (error.code === 'auth/wrong-password') {
-        setError('Incorrect password');
-      } else if (error.code === 'auth/email-already-in-use') {
-        setError('Email already in use');
-      } else if (error.code === 'auth/weak-password') {
-        setError('Password should be at least 6 characters');
-      } else if (error.code === 'auth/invalid-credential') {
-        setError('Invalid email or password');
+      if (error.code === "auth/invalid-email") {
+        setError("Invalid email address");
+      } else if (error.code === "auth/user-not-found") {
+        setError("No account found with this email");
+      } else if (error.code === "auth/wrong-password") {
+        setError("Incorrect password");
+      } else if (error.code === "auth/email-already-in-use") {
+        setError("Email already in use");
+      } else if (error.code === "auth/weak-password") {
+        setError("Password should be at least 6 characters");
+      } else if (error.code === "auth/invalid-credential") {
+        setError("Invalid email or password");
       } else {
-        setError(error.message || 'Authentication failed');
+        setError(error.message || "Authentication failed");
       }
     } finally {
       setLoading(false);
@@ -54,8 +54,10 @@ function Login() {
         </div>
 
         <div className="login-content">
-          <h2>{isSignup ? 'Create Account' : 'Welcome Back'}</h2>
-          <p>{isSignup ? 'Sign up to get started' : 'Sign in to manage your properties and tenants'}</p>
+          <h2>{isSignup ? "Create Account" : "Welcome Back"}</h2>
+          <p>
+            {isSignup ? "Sign up to get started" : "Sign in to manage your properties and tenants"}
+          </p>
 
           <form onSubmit={handleSubmit}>
             <div className="form-group">
@@ -64,7 +66,7 @@ function Login() {
                 id="email"
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={e => setEmail(e.target.value)}
                 placeholder="Enter your email"
                 required
                 autoComplete="email"
@@ -77,22 +79,18 @@ function Login() {
                 id="password"
                 type="password"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={e => setPassword(e.target.value)}
                 placeholder="Enter your password"
                 required
-                autoComplete={isSignup ? 'new-password' : 'current-password'}
+                autoComplete={isSignup ? "new-password" : "current-password"}
                 minLength="6"
               />
             </div>
 
-            {error && (
-              <div className="error-message">
-                {error}
-              </div>
-            )}
+            {error && <div className="error-message">{error}</div>}
 
             <button type="submit" className="login-button" disabled={loading}>
-              {loading ? 'Please wait...' : (isSignup ? 'Sign Up' : 'Sign In')}
+              {loading ? "Please wait..." : isSignup ? "Sign Up" : "Sign In"}
             </button>
           </form>
 
@@ -101,11 +99,11 @@ function Login() {
               type="button"
               onClick={() => {
                 setIsSignup(!isSignup);
-                setError('');
+                setError("");
               }}
               className="toggle-button"
             >
-              {isSignup ? 'Already have an account? Sign In' : "Don't have an account? Sign Up"}
+              {isSignup ? "Already have an account? Sign In" : "Don't have an account? Sign Up"}
             </button>
           </div>
 

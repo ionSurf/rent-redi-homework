@@ -6,7 +6,7 @@
  */
 
 const admin = require("firebase-admin");
-require('dotenv').config();
+require("dotenv").config();
 
 // Initialize Firebase Admin
 if (!admin.apps.length) {
@@ -19,9 +19,9 @@ if (!admin.apps.length) {
   }
 
   // Check if service account key exists
-  if (process.env.FIREBASE_SERVICE_ACCOUNT && process.env.FIREBASE_SERVICE_ACCOUNT !== '') {
+  if (process.env.FIREBASE_SERVICE_ACCOUNT && process.env.FIREBASE_SERVICE_ACCOUNT !== "") {
     // Load service account key
-    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
+    const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),

@@ -34,7 +34,7 @@ const telemetryMiddleware = (req, res, next) => {
   RED_METRICS.endpoints[endpoint].count++;
 
   // Capture response finish event
-  res.on('finish', () => {
+  res.on("finish", () => {
     const duration = Date.now() - start;
 
     // Track duration
@@ -48,8 +48,7 @@ const telemetryMiddleware = (req, res, next) => {
     }
 
     // Track status codes
-    RED_METRICS.statusCodes[res.statusCode] =
-      (RED_METRICS.statusCodes[res.statusCode] || 0) + 1;
+    RED_METRICS.statusCodes[res.statusCode] = (RED_METRICS.statusCodes[res.statusCode] || 0) + 1;
 
     // Log slow requests (SRE best practice)
     if (duration > 1000) {
@@ -89,9 +88,10 @@ const getMetrics = (req, res) => {
   const p99Duration = calculatePercentile(RED_METRICS.durations, 99);
 
   // Calculate error rate
-  const errorRate = RED_METRICS.requestCount > 0
-    ? ((RED_METRICS.errorCount / RED_METRICS.requestCount) * 100).toFixed(2)
-    : 0;
+  const errorRate =
+    RED_METRICS.requestCount > 0
+      ? ((RED_METRICS.errorCount / RED_METRICS.requestCount) * 100).toFixed(2)
+      : 0;
 
   // Per-endpoint breakdown
   const endpointMetrics = {};
@@ -99,11 +99,9 @@ const getMetrics = (req, res) => {
     endpointMetrics[endpoint] = {
       count: data.count,
       errors: data.errors,
-      errorRate: data.count > 0
-        ? ((data.errors / data.count) * 100).toFixed(2) + '%'
-        : '0%',
-      avgDuration: calculateAverage(data.durations).toFixed(2) + 'ms',
-      p95Duration: calculatePercentile(data.durations, 95).toFixed(2) + 'ms'
+      errorRate: data.count > 0 ? ((data.errors / data.count) * 100).toFixed(2) + "%" : "0%",
+      avgDuration: calculateAverage(data.durations).toFixed(2) + "ms",
+      p95Duration: calculatePercentile(data.durations, 95).toFixed(2) + "ms"
     };
   }
 
@@ -111,17 +109,17 @@ const getMetrics = (req, res) => {
     // RED Metrics (Golden Signals)
     rate: {
       total: RED_METRICS.requestCount,
-      ratePerMinute: 'N/A' // Would need time-windowing for accurate rate
+      ratePerMinute: "N/A" // Would need time-windowing for accurate rate
     },
     errors: {
       total: RED_METRICS.errorCount,
-      errorRate: errorRate + '%'
+      errorRate: errorRate + "%"
     },
     duration: {
-      avg: avgDuration.toFixed(2) + 'ms',
-      p50: p50Duration.toFixed(2) + 'ms',
-      p95: p95Duration.toFixed(2) + 'ms',
-      p99: p99Duration.toFixed(2) + 'ms'
+      avg: avgDuration.toFixed(2) + "ms",
+      p50: p50Duration.toFixed(2) + "ms",
+      p95: p95Duration.toFixed(2) + "ms",
+      p99: p99Duration.toFixed(2) + "ms"
     },
 
     // Additional insights
@@ -130,7 +128,7 @@ const getMetrics = (req, res) => {
 
     // Metadata
     timestamp: new Date().toISOString(),
-    uptime: process.uptime().toFixed(2) + 's'
+    uptime: process.uptime().toFixed(2) + "s"
   });
 };
 
