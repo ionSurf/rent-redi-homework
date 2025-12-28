@@ -5,7 +5,6 @@
  * Validates input and formats output
  */
 
-const { z } = require("zod");
 const userService = require("../services/user.service");
 const { UserSchema } = require("../models/user.model");
 const asyncHandler = require("../utils/asyncHandler");
@@ -66,31 +65,10 @@ const deleteUser = asyncHandler(async (req, res) => {
   res.status(204).send();
 });
 
-/**
- * Error handler wrapper for Zod validation errors
- * This middleware wraps controller functions to handle validation errors
- */
-const withValidation = controllerFn => {
-  return async (req, res, next) => {
-    try {
-      await controllerFn(req, res, next);
-    } catch (err) {
-      if (err instanceof z.ZodError) {
-        // Return a clean 400 error with Zod's specific issues
-        return res.status(400).json({ errors: err.errors });
-      }
-
-      // Handle custom error status codes (like 404 from service)
-      const statusCode = err.statusCode || 500;
-      res.status(statusCode).json({ error: err.message });
-    }
-  };
-};
-
 module.exports = {
-  getAllUsers: withValidation(getAllUsers),
-  getUserById: withValidation(getUserById),
-  createUser: withValidation(createUser),
-  updateUser: withValidation(updateUser),
-  deleteUser: withValidation(deleteUser)
+  getAllUsers,
+  getUserById,
+  createUser,
+  updateUser,
+  deleteUser
 };
