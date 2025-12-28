@@ -43,6 +43,8 @@ docker build -t rentredi-backend-test .
 
 #### Step 2: Run the Container (Simulating Cloud Run)
 
+**IMPORTANT:** You must set the `FIREBASE_DATABASE_URL` environment variable!
+
 ```bash
 docker run --rm \
   -e PORT=8080 \
@@ -51,6 +53,8 @@ docker run --rm \
   --name rentredi-test \
   rentredi-backend-test
 ```
+
+Replace `rentredi-short-take-home-default-rtdb.firebaseio.com` with your actual Firebase database URL.
 
 **Expected output:**
 ```

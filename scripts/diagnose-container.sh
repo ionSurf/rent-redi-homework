@@ -13,7 +13,11 @@ docker build -t rentredi-test . || exit 1
 # Test basic run
 echo ""
 echo "2. Testing basic container startup..."
-docker run --rm -e PORT=8080 -p 8080:8080 rentredi-test &
+docker run --rm \
+  -e PORT=8080 \
+  -e FIREBASE_DATABASE_URL="https://rentredi-short-take-home-default-rtdb.firebaseio.com" \
+  -p 8080:8080 \
+  rentredi-test &
 CONTAINER_PID=$!
 
 # Wait for startup
