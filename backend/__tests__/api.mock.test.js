@@ -27,8 +27,6 @@ jest.mock("../services/weatherService", () => ({
 }));
 
 describe("API Integration Tests (Mocked)", () => {
-  let testUserId;
-
   describe("GET /", () => {
     it("should return welcome message", async () => {
       const response = await request(app).get("/").expect(200);

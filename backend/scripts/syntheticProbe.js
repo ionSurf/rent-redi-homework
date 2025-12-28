@@ -114,7 +114,7 @@ async function probeEndToEnd() {
 
     // Test READ
     const readStart = Date.now();
-    const readRes = await axios.get(`${BACKEND_URL}/users/${userId}`, {
+    await axios.get(`${BACKEND_URL}/users/${userId}`, {
       timeout: TIMEOUT
     });
     const readLatency = Date.now() - readStart;
