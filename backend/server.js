@@ -21,8 +21,8 @@ const { z } = require("zod");
 const weatherBreaker = require("./services/weatherCircuitBreaker");
 const { db } = require("./firebaseConfig");
 const { telemetryMiddleware, getMetrics } = require("./middleware/telemetry.middleware");
-const { UserSchema, createUpdateObject } = require("./models/user.model");
-const userRepository = require("./repositories/user.repository");
+const { UserSchema } = require("./models/user.model");
+const userService = require("./services/user.service");
 const app = express();
 
 app.use(cors());
@@ -83,7 +83,7 @@ app.get("/metrics", getMetrics);
 // Get all
 app.get("/users", async (_, res) => {
   console.log("Get all users");
-  const users = await userRepository.findAll();
+  const users = await userService.getAllUsers();
   res.json(users);
 });
 
@@ -91,7 +91,7 @@ app.get("/users", async (_, res) => {
 app.get("/users/:id", async (req, res) => {
   const { id } = req.params;
   console.log(`Get user with id=${id}`);
-  const user = await userRepository.findById(id);
+  const user = await userService.getUserById(id);
   res.json(user);
 });
 
@@ -101,19 +101,7 @@ app.post("/users", async (req, res) => {
     // Validate the request body against the schema
     const validatedData = UserSchema.parse(req.body);
 
-    const { name, zip } = validatedData;
-    const geoData = await weatherBreaker.fire(zip);
-
-    const userData = {
-      name,
-      zip,
-      latitude: geoData.lat,
-      longitude: geoData.lon,
-      timezone: geoData.timezone,
-      locationName: geoData.locationName
-    };
-
-    const createdUser = await userRepository.create(userData);
+    const createdUser = await userService.createUser(validatedData);
     res.status(201).json(createdUser);
   } catch (err) {
     if (err instanceof z.ZodError) {
@@ -131,38 +119,24 @@ app.put("/users/:id", async (req, res) => {
 
     // Validate the request body against the schema
     const validatedData = UserSchema.parse(req.body);
-    const { name, zip } = validatedData;
 
-    // Check if user exists
-    const userExists = await userRepository.exists(id);
-    if (!userExists) return res.status(404).json({ error: "User not found" });
-
-    // Get current user to check if ZIP changed
-    const currentUser = await userRepository.findById(id);
-
-    let updates;
-
-    if (zip && zip !== currentUser.zip) {
-      const geoData = await weatherBreaker.fire(zip);
-      updates = createUpdateObject(name, zip, geoData);
-    } else {
-      updates = createUpdateObject(name);
-    }
-
-    const updatedUser = await userRepository.update(id, updates);
+    const updatedUser = await userService.updateUser(id, validatedData);
     res.json(updatedUser);
   } catch (err) {
     if (err instanceof z.ZodError) {
       // Return a clean 400 error with Zod's specific issues
       return res.status(400).json({ errors: err.errors });
     }
-    res.status(500).json({ error: err.message });
+
+    // Handle custom error status codes (like 404 from service)
+    const statusCode = err.statusCode || 500;
+    res.status(statusCode).json({ error: err.message });
   }
 });
 
 // Delete
 app.delete("/users/:id", async (req, res) => {
-  await userRepository.remove(req.params.id);
+  await userService.deleteUser(req.params.id);
   res.status(204).send();
 });
 
